@@ -1,0 +1,52 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<h1>Edit Product</h1>
+
+<div id="expandableForm" style="margin-top: 20px;">
+    <form action="{{ url_for('update_product', product_id=product.id) }}" method="POST">
+    {{ form.hidden_tag() }}  <!-- CSRF token -->
+    
+    <div>
+        <label for="name">Product Name:</label>
+        {{ form.name(size=32) }}  <!-- Render the name field -->
+        {% if form.name.errors %}
+            <div class="error">{{ form.name.errors[0] }}</div>  <!-- Show error if any -->
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="description">Description:</label>
+        {{ form.description(size=64) }}  <!-- Render the description field -->
+        {% if form.description.errors %}
+            <div class="error">{{ form.description.errors[0] }}</div>  <!-- Show error if any -->
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="price">Price:</label>
+        {{ form.price() }}  <!-- Render the price field -->
+        {% if form.price.errors %}
+            <div class="error">{{ form.price.errors[0] }}</div>  <!-- Show error if any -->
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="category">Category:</label>
+        <select name="category_id" id="category_id">
+            {% for category in categories %}
+                <option value="{{ category.id }}" {% if category.id == product.category_id %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('add_category') }}" class="btn btn-primary">Add New Category</a>
+    </div>
+
+    <button type="submit">Update Product</button>  <!-- Button to submit the form -->
+</form>
+</div>
+
+<a href="{{ url_for('get_products') }}">Back to Products</a>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<h1>Add New Category</h1>
+
+<form method="POST">
+    {{ form.hidden_tag() }}  <!-- CSRF token -->
+    <div>
+        <label for="name">Category Name:</label>
+        {{ form.name() }}  <!-- Render the name field -->
+    </div>
+    <button type="submit">Add Category</button>
+</form>
+
+<a href="{{ url_for('get_products') }}">Back to Products</a>
+{% endblock %}

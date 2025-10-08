@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full height of the viewport */
+}
+
+header {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    width: 100%;
+    height: 100%; /* Full height to allow vertical centering */
+}
+
+.slider {
+    position: relative;
+    width: 80%; /* Set a fixed width for the slider */
+    max-width: 1200px; /* Optional: Set a maximum width */
+    height: 400px; /* Fixed height for the slider */
+    overflow: hidden;
+}
+
+.slides {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+    min-width: 100%;
+    height: 100%; /* Ensure each slide takes the full height */
+    position: relative;
+}
+
+.slide img {
+    width: 100%; 
+    height: 100%; /* Maintain fixed height */
+    object-fit: cover; /* Cover the area while maintaining aspect ratio */
+    position: absolute; /* To fill the parent slide */
+    top: 0;
+    left: 0;
+}
+
+.nav {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+}
+
+.prev, .next {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dots {
+    text-align: center;
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+}
+
+.dot {
+    display: inline-block;
+    margin: 0 2px;
+    height: 12px;
+    width: 12px;
+    background-color: gray;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.dot.active {
+    background-color: red; /* Highlight active dot */
+}
+
+main {
+    padding: 20px; /* Add padding for the main content area */
+}
+
+.post {
+    margin-bottom: 15px; /* Spacing between posts */
+    border: 1px solid #ccc; /* Optional: Add borders to posts */
+    padding: 10px; /* Padding inside each post */
+}

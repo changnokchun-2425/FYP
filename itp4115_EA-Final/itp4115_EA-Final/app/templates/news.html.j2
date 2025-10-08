@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest News</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: {{ 'dark' if theme == 'dark' else 'white' }};
+            color: {{ 'white' if theme == 'dark' else 'black' }};
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1>Latest News</h1>
+
+    {% if subscribed %}
+        <div class="alert alert-success">Thank you for subscribing to our newsletter!</div>
+    {% endif %}
+
+    <div class="row">
+        {% for article in articles %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ article.title }}</h5>
+                        <p class="card-text">{{ article.content }}</p>
+                        <p class="text-muted">
+                            Author: {{ article.author.username }} | 
+                            Category: {{ article.category.name }} | 
+                            Source: {{ article.source.name }} | 
+                            Published on: {{ article.timestamp.strftime('%Y-%m-%d') }}
+                        </p>
+                        <h6>Tags:</h6>
+                        <ul>
+                            {% for tag in article.article_tags %}
+                                <li>{{ tag.tag.name }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <h6>Comments:</h6>
+                        <ul>
+                            {% for comment in article.comments %}
+                                <li><strong>{{ comment.user.username }}:</strong> {{ comment.content }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <form action="{{ url_for('add_comment', article_id=article.id) }}" method="POST">
+                            <div class="form-group">
+                                <textarea class="form-control" name="content" placeholder="Add a comment" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Comment</button>
+                        </form>
+
+                        <h6>Reactions:</h6>
+                        <p>
+                            Likes: {{ article.reactions | selectattr('reaction_type', 'equalto', 'like') | list | length }} |
+                            Dislikes: {{ article.reactions | selectattr('reaction_type', 'equalto', 'dislike') | list | length }}
+                        </p>
+                        <form action="{{ url_for('add_reaction', article_id=article.id) }}" method="POST">
+                            <button type="submit" name="reaction_type" value="like" class="btn btn-success">Like</button>
+                            <button type="submit" name="reaction_type" value="dislike" class="btn btn-danger">Dislike</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2>Subscribe to Our Newsletter</h2>
+    <form action="{{ url_for('subscribe_newsletter') }}" method="POST">
+        <div class="form-group">
+            <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+        </div>
+        <button type="submit" class="btn btn-success">Subscribe</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

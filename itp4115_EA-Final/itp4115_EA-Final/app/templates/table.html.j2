@@ -1,0 +1,96 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<h1>Product List</h1>
+
+{% if current_user.is_authenticated and current_user.is_admin %}
+    <a href="#" class="btn btn-primary" id="toggleFormBtn">Add New Product</a>
+{% endif %}
+
+
+<div id="expandableForm" style="display:none; margin-top: 20px;">
+    <form action="{{ url_for('create_product') }}" method="POST">
+        {{ form.hidden_tag() }}  <!-- CSRF token -->
+        <div>
+            <label for="name">Product Name:</label>
+            {{ form.name() }}  <!-- Render the name field -->
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            {{ form.description() }}  <!-- Render the description field -->
+        </div>
+        <div>
+            <label for="price">Price:</label>
+            {{ form.price() }}  <!-- Render the price field -->
+        </div>
+        <div>
+            <label for="category">Category:</label>
+            {{ form.category_id() }}  <!-- Render the category field -->
+            <a href="{{ url_for('add_category') }}" class="btn btn-primary">Add New Category</a>
+        </div>
+        <button type="submit">Submit</button>
+        <button type="button" id="closeFormBtn">Cancel</button>
+    </form>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Category</th>
+            {% if current_user.is_authenticated %}
+                <th>Actions</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.id }}</td>
+            <td><a href="{{ url_for('view_product', product_id=product.id) }}">{{ product.name }}</a></td>
+            <td>{{ product.description }}</td>
+            <td>${{ product.price }}</td>
+            <td>{{ product.category.name }}</td>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+                <td>
+                    <a href="{{ url_for('update_product', product_id=product.id) }}" class="btn btn-warning">Edit</a>
+                    <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" style="display:inline;">
+                        {{ form.hidden_tag() }}
+                        
+                    </form>
+                    
+                </td>
+                <td>
+                    <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" style="display:inline;">
+                        {{ form.hidden_tag() }}  <!-- CSRF token -->
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not products %}
+    <p>No products available.</p>
+{% endif %}
+
+<a href="{{ url_for('get_products') }}">Refresh</a>
+
+<script>
+document.getElementById('toggleFormBtn').onclick = function(event) {
+    event.preventDefault();
+    var formDiv = document.getElementById('expandableForm');
+    formDiv.style.display = formDiv.style.display === 'none' ? 'block' : 'none';
+};
+
+document.getElementById('closeFormBtn').onclick = function() {
+    document.getElementById('expandableForm').style.display = 'none';
+};
+</script>
+
+{% endblock %}
