@@ -1,13 +1,334 @@
-{% extends "base.html.j2" %}
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員中心 - MCL Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block content %}
-<h1>{{ user.username }}'s Profile</h1>
-<hr>
-<p><strong>Email:</strong> {{ user.email }}</p>
-<p><strong>Role:</strong> {{ 'Admin' if user.is_admin else 'User' }}</p>
-<br>
-<p>
-    <a href="{{ url_for('index') }}">Back to Home</a>
-</p>
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
 
-{% endblock %}
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #2a5298;
+        }
+
+        nav a {
+            color: #ffffff;
+            text-decoration: none;
+            margin: 0 1.5rem;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #e50914;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
+        }
+
+        .profile-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+            color: #fff;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            transition: transform 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(229, 9, 20, 0.2);
+        }
+
+        .info-card h3 {
+            color: #e50914;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .quick-actions {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+
+        .quick-actions h3 {
+            color: #e50914;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #333, #2a2a2a);
+            color: #fff;
+            padding: 1.2rem;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, #e50914, #b20710);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.4);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #666, #555);
+            margin-top: 1rem;
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #888, #666);
+        }
+
+        footer {
+            background-color: #0a0a0a;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            border-top: 2px solid #2a5298;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .profile-header h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎬 MCL Cinema 會員中心</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('cinema_index') }}">🎬 電影</a>
+        <a href="{{ url_for('cinema_index') }}">🎟️ 購票</a>
+        <a href="{{ url_for('profile') }}">👤 個人資料</a>
+    </nav>
+
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <h2>{{ user.username }}</h2>
+            <span class="profile-badge">{{ '🌟 管理員' if user.is_admin else '🎫 會員' }}</span>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-grid">
+            <!-- Account Information -->
+            <div class="info-card">
+                <h3>📋 帳號資訊</h3>
+                <div class="info-row">
+                    <span class="info-label">會員名稱</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">電子郵件</span>
+                    <span class="info-value">{{ user.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">帳號類型</span>
+                    <span class="info-value">{{ '管理員帳戶' if user.is_admin else '一般會員' }}</span>
+                </div>
+            </div>
+
+            <!-- Membership Status -->
+            <div class="info-card">
+                <h3>🎯 會員狀態</h3>
+                <div class="info-row">
+                    <span class="info-label">會籍等級</span>
+                    <span class="info-value">{{ '白金會員' if user.is_admin else '標準會員' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">積分</span>
+                    <span class="info-value">1,250 分</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">優惠券</span>
+                    <span class="info-value">3 張可用</span>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="info-card">
+                <h3>📊 最近活動</h3>
+                <div class="info-row">
+                    <span class="info-label">購票次數</span>
+                    <span class="info-value">12 次</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">最近觀影</span>
+                    <span class="info-value">3 天前</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">最愛電影類型</span>
+                    <span class="info-value">動作 / 科幻</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3>🚀 快速功能</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('my_movies') }}" class="action-btn">
+                    🎬 瀏覽電影
+                </a>
+                <a href="{{ url_for('my_bookings') }}" class="action-btn">
+                    🎟️ 我的訂票記錄
+                </a>
+                <a href="{{ url_for('my_coupons') }}" class="action-btn">
+                    💳 我的優惠券
+                </a>
+                <a href="{{ url_for('edit_profile') }}" class="action-btn">
+                    ⚙️ 修改個人資料
+                </a>
+                {% if user.is_admin %}
+                <a href="{{ url_for('index') }}" class="action-btn">
+                    🔧 管理後台
+                </a>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('logout') }}" class="action-btn logout-btn">
+                🚪 登出帳號
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 MCL Cinema. All rights reserved.</p>
+    </footer>
+</body>
+</html>

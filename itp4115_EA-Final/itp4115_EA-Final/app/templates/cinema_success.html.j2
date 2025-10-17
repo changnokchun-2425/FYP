@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>購票成功 - MCL Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        main {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: checkmark 0.8s ease-in-out;
+        }
+
+        @keyframes checkmark {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .success-message h2 {
+            font-size: 2.5rem;
+            color: #4CAF50;
+            margin-bottom: 1rem;
+        }
+
+        .success-message > p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #ddd;
+        }
+
+        .ticket-info {
+            background-color: #1a1a1a;
+            padding: 2.5rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            text-align: left;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .ticket-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        .ticket-info p {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            padding: 0.8rem;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid #e50914;
+        }
+
+        .ticket-info strong {
+            color: #e50914;
+            margin-right: 0.5rem;
+        }
+
+        .qr-code {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background-color: #fff;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+
+        .instructions {
+            background-color: #2a2a2a;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            border-left: 4px solid #2a5298;
+        }
+
+        .instructions h4 {
+            color: #2a5298;
+            margin-bottom: 1rem;
+        }
+
+        .instructions ul {
+            margin-left: 1.5rem;
+            color: #ccc;
+        }
+
+        .instructions li {
+            margin: 0.5rem 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
+            margin: 1rem;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #ff1a24, #e50914);
+            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #3a62a8, #2a5298);
+        }
+
+        footer {
+            background-color: #0a0a0a;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 2px solid #2a5298;
+        }
+
+        footer p {
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .success-message {
+                padding: 2rem;
+            }
+
+            .success-message h2 {
+                font-size: 2rem;
+            }
+
+            .ticket-info {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎬 MCL Cinema</h1>
+    </header>
+    
+    <main>
+        <div class="success-message">
+            <div class="success-icon">✅</div>
+            <h2>購票成功！</h2>
+            <p>感謝 <strong>{{ ticket.name }}</strong>，您的電影票已成功預訂。</p>
+            
+            <div class="ticket-info">
+                <h3>🎟️ 訂票詳情</h3>
+                <p><strong>🎬 電影：</strong>{{ ticket.movie_title }}</p>
+                <p><strong>🕐 場次：</strong>{{ ticket.showtime }}</p>
+                <p><strong>💺 座位數量：</strong>{{ ticket.seats }} 張</p>
+                <p><strong>📧 電郵：</strong>{{ ticket.email }}</p>
+                <p><strong>💰 總金額：</strong>HK${{ ticket.total_price }}</p>
+            </div>
+
+            <div style="text-align: center; margin: 2rem 0;">
+                <div style="background-color: #fff; display: inline-block; padding: 1.5rem; border-radius: 10px;">
+                    <p style="color: #000; margin-bottom: 0.5rem; font-weight: bold;">入場 QR Code</p>
+                    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="200" height="200" fill="white"/>
+                        <rect x="20" y="20" width="30" height="30" fill="black"/>
+                        <rect x="60" y="20" width="10" height="10" fill="black"/>
+                        <rect x="80" y="20" width="10" height="10" fill="black"/>
+                        <rect x="100" y="20" width="10" height="10" fill="black"/>
+                        <rect x="150" y="20" width="30" height="30" fill="black"/>
+                        <rect x="20" y="60" width="10" height="10" fill="black"/>
+                        <rect x="40" y="60" width="10" height="10" fill="black"/>
+                        <rect x="160" y="60" width="10" height="10" fill="black"/>
+                        <rect x="70" y="80" width="60" height="40" fill="black"/>
+                        <rect x="20" y="150" width="30" height="30" fill="black"/>
+                        <rect x="150" y="150" width="30" height="30" fill="black"/>
+                    </svg>
+                    <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">請於入場時出示此 QR Code</p>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h4>📋 重要事項：</h4>
+                <ul>
+                    <li>確認郵件已發送至您的電郵地址</li>
+                    <li>請於開場前 15 分鐘到達戲院</li>
+                    <li>請出示電子票或 QR Code 以供掃描入場</li>
+                    <li>如需取消或更改，請於開場前 2 小時聯絡客服</li>
+                    <li>客戶服務熱線：2317 6666</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <a href="{{ url_for('my_bookings') }}" class="btn">� 查看我的訂票記錄</a>
+                <a href="{{ url_for('cinema_index') }}" class="btn btn-secondary">🎬 繼續購票</a>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 MCL Cinema. All rights reserved. | 香港首選電影院線</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
+    </footer>
+</body>
+</html>

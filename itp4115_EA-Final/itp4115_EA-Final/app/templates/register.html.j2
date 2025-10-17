@@ -1,38 +1,237 @@
-{% extends "base.html.j2" %}
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊 - MCL Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-{% block content %}
-    <h1>Register</h1>
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.username.label }}<br>
-            {{ form.username(size=32) }}<br>
-            {% for error in form.username.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.email.label }}<br>
-            {{ form.email(size=64) }}<br>
-            {% for error in form.email.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.password.label }}<br>
-            {{ form.password(size=32) }}<br>
-            {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.password2.label }}<br>
-            {{ form.password2(size=32) }}<br>
-            {% for error in form.password2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
-{% endblock %}
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .register-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .register-box {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid #333;
+        }
+
+        .register-box h2 {
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .register-box p.subtitle {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
+        .error {
+            color: #e50914;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+            display: block;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #ff1a24, #e50914);
+            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #aaa;
+        }
+
+        .login-link a {
+            color: #e50914;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .login-link a:hover {
+            color: #ff1a24;
+            text-decoration: underline;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: #2a5298;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #3a62a8;
+        }
+
+        footer {
+            background-color: #0a0a0a;
+            text-align: center;
+            padding: 1.5rem;
+            border-top: 2px solid #2a5298;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .register-box {
+                padding: 2rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎬 MCL Cinema</h1>
+    </header>
+
+    <div class="register-container">
+        <div class="register-box">
+            <h2>會員註冊</h2>
+            <p class="subtitle">加入 MCL Cinema，享受獨家優惠</p>
+
+            <form action="" method="post">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.username.label }}
+                    {{ form.username(size=32) }}
+                    {% for error in form.username.errors %}
+                    <span class="error">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.email.label }}
+                    {{ form.email(size=64) }}
+                    {% for error in form.email.errors %}
+                    <span class="error">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password.label }}
+                    {{ form.password(size=32) }}
+                    {% for error in form.password.errors %}
+                    <span class="error">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password2.label }}
+                    {{ form.password2(size=32) }}
+                    {% for error in form.password2.errors %}
+                    <span class="error">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+
+                {{ form.submit(class="submit-btn") }}
+            </form>
+
+            <div class="login-link">
+                已有帳號？ <a href="{{ url_for('login') }}">立即登入</a>
+            </div>
+
+            <div class="back-link">
+                <a href="{{ url_for('cinema_index') }}">← 返回首頁</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 MCL Cinema. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -5,10 +5,13 @@ from flask.cli import AppGroup
 
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, ProductForm, CategoryForm
-from app.models import User, Category, Product, Article, Comment, Tag, ArticleTag, Source, Reaction, Author, Newsletter
+from app.models import User, Category, Product, Article, Comment, Tag, ArticleTag, Source, Reaction, Author, Newsletter, Ticket
 admin_cli = AppGroup('admin')
 
 @app.route("/")
+def home():
+    return redirect(url_for('cinema_index'))
+
 @app.route("/index")
 @login_required
 def index():
@@ -317,4 +320,408 @@ def edit_product(product_id):
         return redirect(url_for('view_product', product_id=product.id))  # Redirect to the product detail page
 
     return render_template('edit_product.html.j2', form=form, product=product, categories=categories)  # Pass categories to template
+
+
+# MCL Cinema Routes - 參考 https://www.mclcinema.com/
+movies = [
+    {
+        'id': 1,
+        'title': '創戰紀：戰神降臨 MX4D',
+        'poster': 'https://image.tmdb.org/t/p/w500/c7YAUyfOG4NgZahjnsDWSij4w8T.jpg',
+        'description': '科幻動作大片，體驗 MX4D 震撼效果，進入虛擬世界的終極對決。',
+        'duration': '127 分鐘',
+        'rating': 'IIA',
+        'genre': '科幻 / 動作',
+        'showtimes': ['2025-10-15 11:00', '2025-10-15 14:00', '2025-10-15 17:00', '2025-10-15 20:00']
+    },
+    {
+        'id': 2,
+        'title': '創戰紀：戰神降臨',
+        'poster': 'https://image.tmdb.org/t/p/w500/c7YAUyfOG4NgZahjnsDWSij4w8T.jpg',
+        'description': '科幻動作史詩，探索數位世界的神秘與危險。',
+        'duration': '127 分鐘',
+        'rating': 'IIA',
+        'genre': '科幻 / 動作',
+        'showtimes': ['2025-10-15 12:30', '2025-10-15 15:30', '2025-10-15 18:30', '2025-10-15 21:30']
+    },
+    {
+        'id': 3,
+        'title': '一戰再戰',
+        'poster': 'https://image.tmdb.org/t/p/w500/9h2KgGXSmWigNTn3kQdEFFngj9i.jpg',
+        'description': '激烈的戰爭動作片，展現人性與勇氣的極限考驗。',
+        'duration': '135 分鐘',
+        'rating': 'IIB',
+        'genre': '動作 / 戰爭',
+        'showtimes': ['2025-10-15 13:00', '2025-10-15 16:00', '2025-10-15 19:00', '2025-10-15 22:00']
+    },
+    {
+        'id': 4,
+        'title': 'j-hope Tour HOPE ON THE STAGE THE MOVIE IMAX LASER',
+        'poster': 'https://image.tmdb.org/t/p/w500/aFSQzB3NIeGGGJsRKPi33VGaC6w.jpg',
+        'description': 'BTS j-hope 演唱會電影，IMAX 激光技術呈現最震撼的舞台表演。',
+        'duration': '105 分鐘',
+        'rating': 'I',
+        'genre': '音樂 / 紀錄',
+        'showtimes': ['2025-10-15 14:00', '2025-10-15 17:30', '2025-10-15 20:30']
+    },
+    {
+        'id': 5,
+        'title': '鏈鋸人 - 劇場版：蕾澤篇 MX4D',
+        'poster': 'https://image.tmdb.org/t/p/w500/8WKCjWxKzd4pQGXgVCMGh49E95H.jpg',
+        'description': '人氣動漫電影版，MX4D 體驗更刺激的惡魔獵人戰鬥。',
+        'duration': '95 分鐘',
+        'rating': 'IIB',
+        'genre': '動畫 / 動作',
+        'showtimes': ['2025-10-15 12:00', '2025-10-15 15:00', '2025-10-15 18:00', '2025-10-15 21:00']
+    },
+    {
+        'id': 6,
+        'title': '鏈鋸人 - 劇場版：蕾澤篇',
+        'poster': 'https://image.tmdb.org/t/p/w500/8WKCjWxKzd4pQGXgVCMGh49E95H.jpg',
+        'description': '熱血動漫改編，惡魔獵人的殘酷與悲壯故事。',
+        'duration': '95 分鐘',
+        'rating': 'IIB',
+        'genre': '動畫 / 動作',
+        'showtimes': ['2025-10-15 11:30', '2025-10-15 14:30', '2025-10-15 17:30', '2025-10-15 20:30']
+    },
+    {
+        'id': 7,
+        'title': '頭文字D (4K 修復版)',
+        'poster': 'https://image.tmdb.org/t/p/w500/w6RXcE3NpbJjBgDNQwBgaIRp6J5.jpg',
+        'description': '經典港片 4K 重現，再次體驗秋名山的速度與激情。',
+        'duration': '109 分鐘',
+        'rating': 'IIA',
+        'genre': '動作 / 賽車',
+        'showtimes': ['2025-10-15 13:30', '2025-10-15 16:30', '2025-10-15 19:30', '2025-10-15 22:30']
+    },
+    {
+        'id': 8,
+        'title': '觸電',
+        'poster': 'https://image.tmdb.org/t/p/w500/qNbRSEXwG5Z7u2nnI8YqGwSxjkR.jpg',
+        'description': '香港愛情喜劇，笑中帶淚的都市情感故事。',
+        'duration': '98 分鐘',
+        'rating': 'IIA',
+        'genre': '愛情 / 喜劇',
+        'showtimes': ['2025-10-15 14:00', '2025-10-15 17:00', '2025-10-15 20:00']
+    },
+    {
+        'id': 9,
+        'title': '《觸電》特典場',
+        'poster': 'https://image.tmdb.org/t/p/w500/qNbRSEXwG5Z7u2nnI8YqGwSxjkR.jpg',
+        'description': '特別放映場次，包含演員見面會及獨家幕後花絮。',
+        'duration': '120 分鐘',
+        'rating': 'IIA',
+        'genre': '愛情 / 喜劇',
+        'showtimes': ['2025-10-15 19:00']
+    },
+    {
+        'id': 10,
+        'title': '出糧特工隊',
+        'poster': 'https://image.tmdb.org/t/p/w500/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg',
+        'description': '爆笑動作喜劇，打工仔變身特工的荒誕冒險。',
+        'duration': '102 分鐘',
+        'rating': 'IIA',
+        'genre': '喜劇 / 動作',
+        'showtimes': ['2025-10-15 13:00', '2025-10-15 16:00', '2025-10-15 19:00', '2025-10-15 22:00']
+    }
+]
+
+# 即將上映電影
+coming_soon_movies = [
+    {
+        'id': 101,
+        'title': '《劇場版 咒術迴戰 0》- 渋谷事變上映- IMAX Laser',
+        'poster': 'https://image.tmdb.org/t/p/w500/3pTwMUEavTzVOh6yLN0aEwR7uSy.jpg',
+        'description': 'IMAX 激光版本，渋谷事變篇章震撼登場。',
+        'duration': '待公布',
+        'rating': 'IIB',
+        'genre': '動畫 / 動作',
+        'release_date': '2026-01'
+    },
+    {
+        'id': 102,
+        'title': '世外',
+        'poster': 'https://image.tmdb.org/t/p/w500/rjJiBKSLLFqH8pHwGLdRb2vwYEP.jpg',
+        'description': '奇幻冒險電影，探索未知世界的神秘與美麗。',
+        'duration': '待公布',
+        'rating': 'IIA',
+        'genre': '奇幻 / 冒險',
+        'release_date': '2026-02'
+    },
+    {
+        'id': 103,
+        'title': '《藤本樹 17-26》PART.2',
+        'poster': 'https://image.tmdb.org/t/p/w500/wSXgz3PRvAiDkBRXKrJ2Xcd2Wj4.jpg',
+        'description': '藤本樹作品集第二部，集結多部短篇傑作。',
+        'duration': '待公布',
+        'rating': 'IIA',
+        'genre': '動畫 / 劇情',
+        'release_date': '2026-02'
+    },
+    {
+        'id': 104,
+        'title': '迷宮裡的魔術師',
+        'poster': 'https://image.tmdb.org/t/p/w500/xc1dWjZbcVlECL6rMmL5LzVxPFz.jpg',
+        'description': '奇幻冒險動畫，在神秘迷宮中尋找魔法的真諦。',
+        'duration': '待公布',
+        'rating': 'IIA',
+        'genre': '動畫 / 奇幻',
+        'release_date': '2026-03'
+    },
+    {
+        'id': 105,
+        'title': '愛．懺事',
+        'poster': 'https://image.tmdb.org/t/p/w500/kIhVHLj8rXD1RpJcKCVZfGJWRpJ.jpg',
+        'description': '感人愛情劇情片，探討愛與救贖的深刻主題。',
+        'duration': '待公布',
+        'rating': 'IIA',
+        'genre': '愛情 / 劇情',
+        'release_date': '2026-04'
+    }
+]
+
+tickets = []
+
+
+@app.route('/cinema')
+def cinema_index():
+    return render_template('cinema_index.html.j2', movies=movies)
+
+@app.route('/cinema/movie/<int:movie_id>')
+def cinema_movie(movie_id):
+    movie = next((m for m in movies if m['id'] == movie_id), None)
+    if not movie:
+        flash('電影不存在！')
+        return redirect(url_for('cinema_index'))
+    return render_template('cinema_movie.html.j2', movie=movie)
+
+@app.route('/cinema/coming_soon')
+def cinema_coming_soon():
+    return render_template('cinema_coming_soon.html.j2', movies=coming_soon_movies)
+
+@app.route('/cinema/buy_ticket', methods=['POST'])
+@login_required
+def cinema_buy_ticket():
+    movie_id = int(request.form['movie_id'])
+    showtime = request.form['showtime']
+    name = request.form['name']
+    email = request.form['email']
+    seats = int(request.form['seats'])
+    
+    movie = next((m for m in movies if m['id'] == movie_id), None)
+    
+    if not movie:
+        flash('電影不存在！', 'error')
+        return redirect(url_for('cinema_index'))
+    
+    # 創建新的票券記錄
+    ticket = Ticket(
+        user_id=current_user.id,
+        movie_id=movie_id,
+        movie_title=movie['title'],
+        showtime=showtime,
+        seats=seats,
+        total_price=seats * 100,  # HK$100 per seat
+        customer_name=name,
+        customer_email=email,
+        status='confirmed'
+    )
+    
+    try:
+        db.session.add(ticket)
+        db.session.commit()
+        flash('購票成功！', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'購票失敗：{str(e)}', 'error')
+        return redirect(url_for('cinema_movie', movie_id=movie_id))
+    
+    # 將票券信息傳遞給成功頁面
+    ticket_info = {
+        'id': ticket.id,
+        'movie_id': movie_id,
+        'movie_title': movie['title'],
+        'showtime': showtime,
+        'name': name,
+        'email': email,
+        'seats': seats,
+        'total_price': seats * 100
+    }
+    
+    return render_template('cinema_success.html.j2', ticket=ticket_info)
+
+# 我的瀏覽電影頁面
+@app.route('/my_movies')
+@login_required
+def my_movies():
+    # 推薦電影列表
+    recommended_movies = movies[:6]  # 取前6部電影作為推薦
+    return render_template('my_movies.html.j2', movies=recommended_movies)
+
+# 我的訂票記錄頁面
+@app.route('/my_bookings')
+@login_required
+def my_bookings():
+    # 從數據庫獲取當前用戶的訂票記錄
+    user_tickets = Ticket.query.filter_by(user_id=current_user.id).order_by(Ticket.booking_date.desc()).all()
+    
+    # 將 Ticket 對象轉換為字典格式以供模板使用
+    bookings = []
+    for ticket in user_tickets:
+        bookings.append({
+            'id': ticket.id,
+            'movie_id': ticket.movie_id,
+            'movie_title': ticket.movie_title,
+            'showtime': ticket.showtime,
+            'seats': ticket.seats,
+            'total_price': ticket.total_price,
+            'name': ticket.customer_name,
+            'email': ticket.customer_email,
+            'booking_date': ticket.booking_date,
+            'status': ticket.status
+        })
+    
+    return render_template('my_bookings.html.j2', bookings=bookings)
+
+# 退票功能
+@app.route('/cancel_ticket/<int:ticket_id>', methods=['POST'])
+@login_required
+def cancel_ticket(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    # 確保只有票券擁有者可以取消
+    if ticket.user_id != current_user.id:
+        flash('您無權取消此訂單！', 'error')
+        return redirect(url_for('my_bookings'))
+    
+    # 檢查票券狀態
+    if ticket.status == 'cancelled':
+        flash('此訂單已經被取消！', 'error')
+        return redirect(url_for('my_bookings'))
+    
+    try:
+        # 更新狀態為已取消
+        ticket.status = 'cancelled'
+        db.session.commit()
+        flash(f'已成功取消《{ticket.movie_title}》的訂票！退款將在 3-5 個工作天內處理。', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'取消訂票失敗：{str(e)}', 'error')
+    
+    return redirect(url_for('my_bookings'))
+
+# 我的優惠券頁面
+@app.route('/my_coupons')
+@login_required
+def my_coupons():
+    # 示例優惠券數據
+    coupons = [
+        {
+            'id': 1,
+            'name': '週末優惠',
+            'discount': '8折',
+            'code': 'WEEKEND20',
+            'expiry': '2026-01-31',
+            'status': 'available'
+        },
+        {
+            'id': 2,
+            'name': '新會員優惠',
+            'discount': 'HK$50',
+            'code': 'NEWMEMBER50',
+            'expiry': '2025-12-31',
+            'status': 'available'
+        },
+        {
+            'id': 3,
+            'name': 'IMAX專場',
+            'discount': 'HK$30',
+            'code': 'IMAX30',
+            'expiry': '2025-11-30',
+            'status': 'used'
+        }
+    ]
+    return render_template('my_coupons.html.j2', coupons=coupons)
+
+# 修改個人資料頁面
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'POST':
+        try:
+            # 獲取表單數據
+            new_username = request.form.get('username', '').strip()
+            new_email = request.form.get('email', '').strip()
+            new_phone = request.form.get('phone', '').strip()
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            
+            # 驗證用戶名
+            if new_username and new_username != current_user.username:
+                # 檢查用戶名是否已存在
+                existing_user = User.query.filter_by(username=new_username).first()
+                if existing_user:
+                    db.session.rollback()  # 回滾任何未提交的更改
+                    flash('用戶名已被使用，請選擇其他用戶名！', 'error')
+                    return redirect(url_for('edit_profile'))
+            
+            # 驗證郵箱
+            if new_email and new_email != (current_user.email if hasattr(current_user, 'email') else ''):
+                # 檢查郵箱是否已存在
+                existing_email = User.query.filter_by(email=new_email).first()
+                if existing_email and existing_email.id != current_user.id:
+                    db.session.rollback()  # 回滾任何未提交的更改
+                    flash('電子郵件已被使用，請使用其他郵箱！', 'error')
+                    return redirect(url_for('edit_profile'))
+            
+            # 處理密碼更改驗證（在修改任何數據之前）
+            if new_password:
+                # 驗證新密碼長度
+                if len(new_password) < 8:
+                    db.session.rollback()
+                    flash('新密碼必須至少 8 個字元！', 'error')
+                    return redirect(url_for('edit_profile'))
+                
+                # 驗證密碼確認
+                if new_password != confirm_password:
+                    db.session.rollback()
+                    flash('新密碼與確認密碼不符！', 'error')
+                    return redirect(url_for('edit_profile'))
+                
+                # 驗證當前密碼（如果有設置的話）
+                if current_password and not current_user.check_password(current_password):
+                    db.session.rollback()
+                    flash('目前密碼錯誤！', 'error')
+                    return redirect(url_for('edit_profile'))
+            
+            # 所有驗證通過後才開始修改數據
+            # 更新用戶名
+            if new_username and new_username != current_user.username:
+                current_user.username = new_username
+            
+            # 更新郵箱
+            if new_email and new_email != (current_user.email if hasattr(current_user, 'email') else ''):
+                if hasattr(current_user, 'email'):
+                    current_user.email = new_email
+            
+            # 更新手機號碼
+            if hasattr(current_user, 'phone'):
+                current_user.phone = new_phone
+            
+            # 更新密碼
+            if new_password:
+                current_user.set_password(new_password)
+            
+            # 提交更改
+            db.session.commit()
+            flash('個人資料已成功更新！', 'success')
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'更新失敗：{str(e)}', 'error')
+            return redirect(url_for('edit_profile'))
+    
+    return render_template('edit_profile.html.j2')
 

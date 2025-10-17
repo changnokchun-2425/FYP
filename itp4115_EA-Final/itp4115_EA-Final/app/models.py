@@ -161,3 +161,23 @@ class Newsletter(db.Model):
 
     def __repr__(self):
         return f'<Newsletter {self.email}>'
+
+
+class Ticket(db.Model):
+    """Represents a movie ticket booking."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    movie_id = db.Column(db.Integer, nullable=False)
+    movie_title = db.Column(db.String(128), nullable=False)
+    showtime = db.Column(db.String(64), nullable=False)
+    seats = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    customer_name = db.Column(db.String(64), nullable=False)
+    customer_email = db.Column(db.String(120), nullable=False)
+    booking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='confirmed')  # confirmed, cancelled, completed
+    
+    user = db.relationship('User', backref='tickets')
+    
+    def __repr__(self):
+        return f'<Ticket {self.movie_title} - {self.customer_name}>'

@@ -1,125 +1,286 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html.j2" %}
+{% block title %}MCL Cinema - 香港首選電影院線{% endblock %}
+{% block content %}
+    <style>
+        /* Animated background for hero section */
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.95) 0%, rgba(42, 82, 152, 0.95) 100%);
+            padding: 4rem 2rem;
+            text-align: center;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    {% if title %}
-    <title>{{ title }} - Flask</title>
-    {% else %}
-    <title>Flask</title>
-    {% endif %}
-</head>
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://media.giphy.com/media/xTiTnqUxyWbsAXq7Ju/giphy.gif');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+            z-index: 0;
+            animation: backgroundMove 20s ease-in-out infinite;
+        }
 
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        
+        @keyframes backgroundMove {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('sales') }}">Sales</a>
-                </li>
-                {% if current_user.is_anonymous %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                </li>
-                {% endif %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Dropdown
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a>
-                        <a class="dropdown-item" href="{{ url_for('news') }}">news</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{{ url_for('get_products') }}">table</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-        </nav>
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
 
-    <hr>
+        .hero-title {
+            font-size: 3.5rem;
+            color: #fff;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+            animation: fadeInDown 1s ease-out;
+        }
 
-    {% with messages = get_flashed_messages() %}
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: #ddd;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .hero-buttons {
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-apple {
+            background: #e50914;
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            margin: 0 0.5rem;
+            display: inline-block;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .btn-apple:hover {
+            background: #c40812;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-apple-outline {
+            border: 2px solid #fff;
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            margin: 0 0.5rem;
+            display: inline-block;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-apple-outline:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Floating particles effect */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <!-- Flash Messages with better styling -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <ul class="list-unstyled text-center">
-        {% for message in messages %}
-        <li>{{ message }}</li>
+    <div style="max-width: 1200px; margin: 0 auto 2rem; padding: 0 2rem;">
+        {% for category, message in messages %}
+        <div style="padding: 15px 20px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-size: 15px; 
+            {% if category == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+            {% elif category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+            {% else %}background: #fff3cd; color: #856404; border: 1px solid #ffeeba;{% endif %}">
+            {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}ℹ️{% endif %}
+            {{ message }}
+        </div>
         {% endfor %}
-    </ul>
+    </div>
     {% endif %}
     {% endwith %}
 
-    <!-- Header Section with Slider -->
-    <header>
-        <section class="slider">
-            <div class="slides">
-                <div class="slide active">
-                    <img src="{{ url_for('static', filename='1500w.png') }}" alt="Slide 1">
+    <!-- Hero Section with Animated Background -->
+    <section class="hero-section">
+        <div class="particles">
+            <div class="particle" style="width: 10px; height: 10px; left: 10%; animation-delay: 0s;"></div>
+            <div class="particle" style="width: 8px; height: 8px; left: 20%; animation-delay: 2s;"></div>
+            <div class="particle" style="width: 12px; height: 12px; left: 30%; animation-delay: 4s;"></div>
+            <div class="particle" style="width: 6px; height: 6px; left: 40%; animation-delay: 1s;"></div>
+            <div class="particle" style="width: 10px; height: 10px; left: 50%; animation-delay: 3s;"></div>
+            <div class="particle" style="width: 8px; height: 8px; left: 60%; animation-delay: 5s;"></div>
+            <div class="particle" style="width: 12px; height: 12px; left: 70%; animation-delay: 2.5s;"></div>
+            <div class="particle" style="width: 10px; height: 10px; left: 80%; animation-delay: 4.5s;"></div>
+            <div class="particle" style="width: 8px; height: 8px; left: 90%; animation-delay: 1.5s;"></div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">🎬 歡迎來到 MCL Cinema</h1>
+            <p class="hero-subtitle">香港首選電影院線 - 極致觀影體驗</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('cinema_index') }}" class="btn-apple">🎟️ 立即購票</a>
+                <a href="{{ url_for('cinema_index') }}" class="btn-apple-outline">瀏覽電影</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Movies Section -->
+    <section class="product-grid" style="max-width: 1400px; margin: 3rem auto; padding: 0 2rem;">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #e50914;">🔥 本週熱映</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+            <div class="product-card large-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h2 class="product-title" style="font-size: 2rem; color: #fff; margin-bottom: 0.5rem;">創戰紀：戰神降臨 MX4D</h2>
+                    <p class="product-subtitle" style="color: #e50914; margin-bottom: 1rem;">科幻 / 動作</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">MX4D 震撼體驗虛擬世界</p>
+                    <div class="product-buttons">
+                        <a href="{{ url_for('cinema_movie', movie_id=1) }}" class="btn-buy" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
                 </div>
-                <div class="slide">
-                    <img src="{{ url_for('static', filename='1400w.png') }}" alt="Slide 2">
+            </div>
+            
+            <div class="product-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h3 class="product-title-small" style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">一戰再戰</h3>
+                    <p class="product-subtitle-small" style="color: #e50914; margin-bottom: 1rem;">動作 / 戰爭</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">極限考驗人性與勇氣</p>
+                    <div class="product-buttons-small">
+                        <a href="{{ url_for('cinema_movie', movie_id=3) }}" class="btn-learn-more-small" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
                 </div>
             </div>
-            <div class="nav">
-                <div class="prev" onclick="changeSlide(-1)">&#10094;</div>
-                <div class="next" onclick="changeSlide(1)">&#10095;</div>
+
+            <div class="product-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h3 class="product-title-small" style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">鏈鋸人 - 劇場版 MX4D</h3>
+                    <p class="product-subtitle-small" style="color: #e50914; margin-bottom: 1rem;">動畫 / 動作</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">MX4D 刺激惡魔獵人戰鬥</p>
+                    <div class="product-buttons-small">
+                        <a href="{{ url_for('cinema_movie', movie_id=5) }}" class="btn-buy-small" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
+                </div>
             </div>
-            <div class="dots">
-                <span class="dot" onclick="currentSlide(1)"></span>
-                <span class="dot" onclick="currentSlide(2)"></span>
+
+            <div class="product-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h3 class="product-title-small" style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">頭文字D 4K 修復版</h3>
+                    <p class="product-subtitle-small" style="color: #e50914; margin-bottom: 1rem;">動作 / 賽車</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">經典港片 4K 重現</p>
+                    <div class="product-buttons-small">
+                        <a href="{{ url_for('cinema_movie', movie_id=7) }}" class="btn-buy-small" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
+                </div>
             </div>
-        </section>
-    </header>
 
-    {% block content %}{% endblock %}
+            <div class="product-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h3 class="product-title-small" style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">j-hope 演唱會 IMAX</h3>
+                    <p class="product-subtitle-small" style="color: #e50914; margin-bottom: 1rem;">音樂 / 紀錄</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">IMAX 震撼舞台體驗</p>
+                    <div class="product-buttons-small">
+                        <a href="{{ url_for('cinema_movie', movie_id=4) }}" class="btn-buy-small" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
+                </div>
+            </div>
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-        let slideIndex = 1;
-        showSlides(slideIndex);
+            <div class="product-card" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div class="product-content" style="padding: 2rem; text-align: center;">
+                    <h3 class="product-title-small" style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">出糧特工隊</h3>
+                    <p class="product-subtitle-small" style="color: #e50914; margin-bottom: 1rem;">喜劇 / 動作</p>
+                    <p style="color: #ccc; margin-bottom: 1.5rem;">爆笑特工荒誕冒險</p>
+                    <div class="product-buttons-small">
+                        <a href="{{ url_for('cinema_movie', movie_id=10) }}" class="btn-buy-small" style="background: #e50914; color: white; padding: 0.8rem 2rem; text-decoration: none; border-radius: 8px; display: inline-block;">購票</a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        function changeSlide(n) {
-            showSlides(slideIndex += n);
-        }
+        <!-- Call to Action -->
+        <div style="text-align: center; margin: 3rem 0;">
+            <h3 style="font-size: 2rem; color: #333; margin-bottom: 1rem;">準備好享受電影了嗎？</h3>
+            <a href="{{ url_for('cinema_index') }}" style="background: linear-gradient(135deg, #e50914, #b20710); color: white; padding: 1.2rem 3rem; text-decoration: none; border-radius: 8px; font-size: 1.3rem; display: inline-block; box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);">🎬 查看所有電影</a>
+        </div>
+    </section>
 
-        function currentSlide(n) {
-            showSlides(slideIndex = n);
-        }
-
-        function showSlides(n) {
-            const slides = document.getElementsByClassName("slide");
-            const dots = document.getElementsByClassName("dot");
-
-            if (n > slides.length) { slideIndex = 1; }
-            if (n < 1) { slideIndex = slides.length; }
-
-            for (let i = 0; i < slides.length; i++) {
-                slides[i].style.display = "none";  
-            }
-            for (let j = 0; j < dots.length; j++) {
-                dots[j].className = dots[j].className.replace(" active", "");
-            }
-
-            slides[slideIndex - 1].style.display = "block";  
-            dots[slideIndex - 1].className += " active";
-        }
-
-        setInterval(function() {
-            changeSlide(1);
-        }, 5000); // Change slide every 5 seconds
-    </script>
-</body>
-
-</html>
+{% endblock %}

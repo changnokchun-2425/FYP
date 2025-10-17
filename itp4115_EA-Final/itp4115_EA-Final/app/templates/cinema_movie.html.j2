@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ movie.title }} - MCL Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .back-link {
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .movie-detail {
+            display: flex;
+            gap: 3rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .movie-detail img {
+            width: 400px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        .detail-info {
+            flex: 1;
+        }
+
+        .detail-info h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #e50914, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            font-size: 1rem;
+        }
+
+        .movie-meta span {
+            background-color: #333;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-info p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .booking-form {
+            background-color: #2a2a2a;
+            padding: 2.5rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .booking-form h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #e50914;
+        }
+
+        .booking-form label {
+            display: block;
+            margin-top: 1.2rem;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .booking-form input,
+        .booking-form select {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .booking-form input:focus,
+        .booking-form select:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
+        .booking-form button {
+            width: 100%;
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            color: white;
+            padding: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
+        }
+
+        .booking-form button:hover {
+            background: linear-gradient(135deg, #ff1a24, #e50914);
+            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .price-info {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border-left: 4px solid #e50914;
+        }
+
+        .price-info p {
+            margin: 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        footer {
+            background-color: #0a0a0a;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 2px solid #2a5298;
+        }
+
+        footer p {
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .movie-detail {
+                flex-direction: column;
+                padding: 2rem;
+            }
+            
+            .movie-detail img {
+                width: 100%;
+            }
+
+            .back-link {
+                position: static;
+                display: block;
+                margin-bottom: 1rem;
+                transform: none;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .detail-info h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('cinema_index') }}" class="back-link">← 返回首頁</a>
+        <h1>🎬 MCL Cinema</h1>
+    </header>
+    
+    <main>
+        <div class="movie-detail">
+            <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/400x600?text=MCL+Cinema'">
+            <div class="detail-info">
+                <h2>{{ movie.title }}</h2>
+                <div class="movie-meta">
+                    <span>⏱️ {{ movie.duration }}</span>
+                    <span>📊 {{ movie.rating }}</span>
+                    <span>🎬 {{ movie.genre }}</span>
+                </div>
+                <p>{{ movie.description }}</p>
+                
+                <div class="booking-form">
+                    <h3>🎟️ 購票資訊</h3>
+                    {% if current_user.is_authenticated %}
+                    <form method="post" action="{{ url_for('cinema_buy_ticket') }}" id="bookingForm">
+                        <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                        
+                        <label for="showtime">選擇場次：</label>
+                        <select name="showtime" id="showtime" required>
+                            <option value="">請選擇場次</option>
+                            {% for time in movie.showtimes %}
+                            <option value="{{ time }}">{{ time }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <label for="name">姓名：</label>
+                        <input type="text" name="name" id="name" placeholder="請輸入您的姓名" value="{{ current_user.username }}" required>
+                        
+                        <label for="email">電郵：</label>
+                        <input type="email" name="email" id="email" placeholder="example@email.com" value="{{ current_user.email }}" required>
+                        
+                        <label for="seats">座位數量：</label>
+                        <input type="number" name="seats" id="seats" min="1" max="10" value="1" required onchange="updatePrice()">
+                        
+                        <div class="price-info">
+                            <p><strong>票價：</strong>HK$100 / 張</p>
+                            <p id="totalPrice"><strong>總計：</strong>HK$100</p>
+                        </div>
+                        
+                        <button type="submit">🎫 確認購票</button>
+                    </form>
+                    {% else %}
+                    <div style="text-align: center; padding: 2rem; background: rgba(229, 9, 20, 0.1); border-radius: 10px; border: 2px solid #e50914;">
+                        <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ 請先登入以購買電影票</p>
+                        <a href="{{ url_for('login', next=request.path) }}" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #e50914 0%, #c40812 100%); color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                            前往登入
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 MCL Cinema. All rights reserved. | 香港首選電影院線</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
+    </footer>
+
+    <script>
+        function updatePrice() {
+            const seats = document.getElementById('seats').value;
+            const pricePerSeat = 100;
+            const total = seats * pricePerSeat;
+            document.getElementById('totalPrice').innerHTML = '<strong>總計：</strong>HK$' + total;
+        }
+    </script>
+</body>
+</html>

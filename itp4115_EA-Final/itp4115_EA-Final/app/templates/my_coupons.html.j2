@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的優惠券 - MCL Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stats-banner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: #fff;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #1e3c72;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: rgba(30, 60, 114, 0.1);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+        }
+
+        .coupons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .coupon-card {
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        .coupon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .coupon-card.used {
+            opacity: 0.6;
+            filter: grayscale(50%);
+        }
+
+        .coupon-header {
+            background: linear-gradient(135deg, #e50914 0%, #c40812 100%);
+            padding: 20px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coupon-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .coupon-discount {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .coupon-name {
+            font-size: 18px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        .coupon-body {
+            padding: 20px;
+        }
+
+        .coupon-code {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .code-text {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .copy-btn {
+            padding: 6px 15px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .coupon-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: #666;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .expiry-warning {
+            color: #e50914;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .use-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #e50914 0%, #c40812 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .use-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .use-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .used-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 48px;
+            font-weight: bold;
+            color: rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .empty-state {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .coupons-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-banner {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 我的優惠券</h1>
+            <a href="{{ url_for('profile') }}" class="back-btn">← 返回個人中心</a>
+        </div>
+
+        <div class="stats-banner">
+            <div class="stat-item">
+                <div class="stat-number">{{ coupons|selectattr('status', 'equalto', 'available')|list|length }}</div>
+                <div class="stat-label">可用優惠券</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ coupons|selectattr('status', 'equalto', 'used')|list|length }}</div>
+                <div class="stat-label">已使用</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ coupons|length }}</div>
+                <div class="stat-label">總計</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active">全部優惠券</button>
+            <button class="tab-btn">可使用</button>
+            <button class="tab-btn">已使用</button>
+            <button class="tab-btn">已過期</button>
+        </div>
+
+        {% if coupons and coupons|length > 0 %}
+        <div class="coupons-grid">
+            {% for coupon in coupons %}
+            <div class="coupon-card {% if coupon.status == 'used' %}used{% endif %}">
+                {% if coupon.status == 'used' %}
+                <div class="used-badge">已使用</div>
+                {% endif %}
+
+                <div class="coupon-header">
+                    <div class="coupon-discount">{{ coupon.discount }}</div>
+                    <div class="coupon-name">{{ coupon.name }}</div>
+                </div>
+
+                <div class="coupon-body">
+                    <div class="coupon-code">
+                        <span class="code-text">{{ coupon.code }}</span>
+                        <button class="copy-btn" onclick="copyCode('{{ coupon.code }}')">複製</button>
+                    </div>
+
+                    <div class="coupon-details">
+                        <div class="detail-row">
+                            <span class="detail-label">優惠內容：</span>
+                            <span class="detail-value">{{ coupon.discount }} 折扣</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">有效期至：</span>
+                            <span class="detail-value">{{ coupon.expiry }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">狀態：</span>
+                            <span class="detail-value" style="color: {% if coupon.status == 'available' %}#28a745{% else %}#dc3545{% endif %}">
+                                {% if coupon.status == 'available' %}可使用{% else %}已使用{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if coupon.status == 'available' %}
+                    <div class="expiry-warning">⏰ 請於有效期內使用</div>
+                    <button class="use-btn" onclick="window.location.href='{{ url_for('cinema_index') }}'">
+                        立即使用
+                    </button>
+                    {% else %}
+                    <button class="use-btn" disabled>已使用</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">💳</div>
+            <div class="empty-text">暫無優惠券</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // 標籤切換功能
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 複製優惠碼
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert('優惠碼已複製：' + code);
+            }).catch(err => {
+                console.error('複製失敗:', err);
+            });
+        }
+    </script>
+</body>
+</html>
