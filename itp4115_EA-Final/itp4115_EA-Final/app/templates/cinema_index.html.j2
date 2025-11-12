@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCL Cinema - 香港首選電影院線</title>
+    <title>FYP Cinema - 香港首選電影院線</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='cinema.css') }}">
     <style>
         * {
@@ -184,13 +184,12 @@
 </head>
 <body>
     <header>
-        <h1>🎬 MCL Cinema</h1>
+        <h1>🎬 FYP Cinema</h1>
         <p>香港首選電影院線 - 極致觀影體驗</p>
     </header>
 
     <nav>
         <a href="{{ url_for('cinema_index') }}">首頁</a>
-        <a href="{{ url_for('cinema_index') }}">現正熱映</a>
         <a href="{{ url_for('cinema_coming_soon') }}">即將上映</a>
         <a href="{{ url_for('index') }}">返回主站</a>
     </nav>
@@ -217,7 +216,7 @@
     </main>
     
     <footer>
-        <p>&copy; 2025 MCL Cinema. All rights reserved. | 香港首選電影院線</p>
+        <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
         <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
     </footer>
 </body>

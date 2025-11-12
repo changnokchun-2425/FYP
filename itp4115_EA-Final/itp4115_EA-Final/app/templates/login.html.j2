@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登入 - MCL Cinema</title>
+    <title>登入 - FYP Cinema</title>
     <style>
         * {
             margin: 0;
@@ -115,6 +115,37 @@
             cursor: pointer;
         }
 
+        .captcha-box {
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .captcha-question {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .captcha-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .captcha-input:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 1.2rem;
@@ -189,7 +220,7 @@
 </head>
 <body>
     <header>
-        <h1>🎬 MCL Cinema</h1>
+        <h1>🎬 FYP Cinema</h1>
     </header>
 
     <div class="login-container">
@@ -220,7 +251,14 @@
                     {{ form.remember_me() }} {{ form.remember_me.label }}
                 </div>
 
-                {{ form.submit(class="submit-btn") }}
+                <div class="captcha-box">
+                    <div class="captcha-question" id="captcha-question"></div>
+                    <input type="text" id="captcha-input" class="captcha-input" placeholder="請輸入答案" required>
+                    <input type="hidden" id="captcha-answer" name="captcha_answer">
+                    <span class="error" id="captcha-error"></span>
+                </div>
+
+                {{ form.submit(class="submit-btn", onclick="return validateCaptcha()") }}
             </form>
 
             <div class="register-link">
@@ -234,7 +272,37 @@
     </div>
 
     <footer>
-        <p>&copy; 2025 MCL Cinema. All rights reserved.</p>
+        <p>&copy; 2025 FYP Cinema. All rights reserved.</p>
     </footer>
+
+    <script>
+        // Simple math captcha
+        let num1, num2, correctAnswer;
+
+        function generateCaptcha() {
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+            correctAnswer = num1 + num2;
+            document.getElementById('captcha-question').textContent = `驗證問題: ${num1} + ${num2} = ?`;
+            document.getElementById('captcha-input').value = '';
+            document.getElementById('captcha-error').textContent = '';
+        }
+
+        function validateCaptcha() {
+            const userAnswer = parseInt(document.getElementById('captcha-input').value);
+            if (isNaN(userAnswer) || userAnswer !== correctAnswer) {
+                document.getElementById('captcha-error').textContent = '驗證答案錯誤，請重試';
+                generateCaptcha();
+                return false;
+            }
+            document.getElementById('captcha-answer').value = correctAnswer;
+            return true;
+        }
+
+        // Generate captcha on page load
+        window.onload = function() {
+            generateCaptcha();
+        };
+    </script>
 </body>
 </html>

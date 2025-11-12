@@ -10,3 +10,5 @@ flask db migrate -m "message"
 flask db upgrade
 flask admin create
 flask routes
+
+flask --app itp4115_EA-Final/itp4115_EA-Final/run.py run

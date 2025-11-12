@@ -322,7 +322,7 @@ def edit_product(product_id):
     return render_template('edit_product.html.j2', form=form, product=product, categories=categories)  # Pass categories to template
 
 
-# MCL Cinema Routes - 參考 https://www.mclcinema.com/
+# FYP Cinema Routes - 參考 https://www.mclcinema.com/
 movies = [
     {
         'id': 1,
