@@ -1,0 +1,229 @@
+/* ========================================
+   CINEMA DETAIL PAGE STYLES
+   ========================================
+   
+   Purpose: Movie detail page and booking form styles
+   Usage: For cinema_movie.html.j2 and similar detail pages
+   
+   Sections:
+   1. Movie Detail Container
+   2. Movie Header
+   3. Movie Poster
+   4. Movie Information
+   5. Booking Form
+   6. Seat Selection
+   7. Price Display
+   8. Responsive Detail Layout
+   
+======================================== */
+
+/* ==========================================================
+   SECTION 1: MOVIE DETAIL CONTAINER
+   Purpose: Main container for movie details
+========================================================== */
+.movie-detail-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* ==========================================================
+   SECTION 2: MOVIE HEADER
+   Purpose: Hero section with movie title and metadata
+========================================================== */
+.movie-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.movie-header h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, #e50914, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==========================================================
+   SECTION 3: MOVIE POSTER
+   Purpose: Large poster image display
+========================================================== */
+.movie-poster {
+    max-width: 400px;
+    width: 100%;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    margin-bottom: 2rem;
+}
+
+/* ==========================================================
+   SECTION 4: MOVIE INFORMATION
+   Purpose: Movie details grid layout
+========================================================== */
+.movie-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.info-section {
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 1px solid #333;
+}
+
+.info-section h3 {
+    color: #e50914;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.info-section p {
+    color: #ccc;
+    line-height: 1.8;
+    margin-bottom: 0.8rem;
+}
+
+.info-label {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.info-value {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* ==========================================================
+   SECTION 5: BOOKING FORM
+   Purpose: Ticket booking form styles
+========================================================== */
+.booking-form {
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    padding: 3rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border: 2px solid #333;
+}
+
+.booking-form h2 {
+    color: #e50914;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ==========================================================
+   SECTION 6: SEAT SELECTION
+   Purpose: Interactive seat selection display
+========================================================== */
+.seat-selection {
+    margin: 2rem 0;
+}
+
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.seat {
+    aspect-ratio: 1;
+    background-color: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.seat:hover {
+    background-color: #e50914;
+    border-color: #e50914;
+}
+
+.seat.selected {
+    background-color: #e50914;
+    border-color: #ff6b6b;
+}
+
+.seat.occupied {
+    background-color: #666;
+    border-color: #888;
+    cursor: not-allowed;
+}
+
+/* ==========================================================
+   SECTION 7: PRICE DISPLAY
+   Purpose: Show ticket price and total
+========================================================== */
+.price-summary {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.price-summary h3 {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.price-amount {
+    font-size: 3rem;
+    color: #e50914;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.price-details {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+/* ==========================================================
+   SECTION 8: RESPONSIVE DETAIL LAYOUT
+   Purpose: Mobile-friendly detail page
+========================================================== */
+@media (max-width: 768px) {
+    .movie-header h1 {
+        font-size: 2rem;
+    }
+
+    .movie-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .booking-form {
+        padding: 2rem 1.5rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .seat-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .price-amount {
+        font-size: 2rem;
+    }
+}

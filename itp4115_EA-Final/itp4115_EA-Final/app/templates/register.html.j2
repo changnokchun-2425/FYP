@@ -1,3 +1,14 @@
+{# ========================================
+   REGISTRATION PAGE
+   ========================================
+   Purpose: New user account creation
+   Features:
+   - Username, email, password fields
+   - Password confirmation
+   - Form validation
+   - Flash message display
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>註冊 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -60,6 +72,24 @@
             color: #aaa;
             text-align: center;
             margin-bottom: 2rem;
+        }
+
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .alert-error {
+            background-color: rgba(229, 9, 20, 0.2);
+            border: 2px solid #e50914;
+            color: #ff6b6b;
         }
 
         .form-group {
@@ -173,6 +203,9 @@
     </style>
 </head>
 <body>
+    <!-- ========================================
+         HEADER SECTION
+    ======================================== -->
     <header>
         <h1>🎬 FYP Cinema</h1>
     </header>
@@ -181,6 +214,16 @@
         <div class="register-box">
             <h2>會員註冊</h2>
             <p class="subtitle">加入 FYP Cinema，享受獨家優惠</p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="alert alert-error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
             <form action="" method="post">
                 {{ form.hidden_tag() }}

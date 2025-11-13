@@ -1,3 +1,15 @@
+{# ========================================
+   MY COUPONS PAGE
+   ========================================
+   Purpose: Display and manage user coupons
+   Features:
+   - Available coupons display
+   - Coupon codes with copy function
+   - Expiry date tracking
+   - Usage status (available/used)
+   - Statistics banner
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的優惠券 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -13,9 +26,10 @@
 
         body {
             font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #fff;
         }
 
         .container {
@@ -28,10 +42,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .header h1 {
@@ -90,9 +104,10 @@
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             padding: 10px;
             border-radius: 15px;
+            border: 1px solid #333;
         }
 
         .tab-btn {
@@ -100,7 +115,7 @@
             padding: 12px 20px;
             border: none;
             background: transparent;
-            color: #1e3c72;
+            color: #fff;
             border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
@@ -109,7 +124,7 @@
         }
 
         .tab-btn:hover {
-            background: rgba(30, 60, 114, 0.1);
+            background: rgba(229, 9, 20, 0.2);
         }
 
         .tab-btn.active {
@@ -123,6 +138,7 @@
             gap: 20px;
         }
 
+        /* ========== COUPON CARD STYLES ========== */
         .coupon-card {
             background: #fff;
             border-radius: 15px;
@@ -281,10 +297,11 @@
         }
 
         .empty-state {
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             border-radius: 15px;
             padding: 60px 20px;
             text-align: center;
+            border: 1px solid #333;
         }
 
         .empty-icon {
@@ -294,7 +311,7 @@
 
         .empty-text {
             font-size: 18px;
-            color: #666;
+            color: #fff;
             margin-bottom: 10px;
         }
 
@@ -399,8 +416,12 @@
         {% endif %}
     </div>
 
+    <!-- ========================================
+         JAVASCRIPT - Tab Switching & Copy Function
+    ======================================== -->
     <script>
-        // 標籤切換功能
+        /* ========== TAB SWITCHING ========== */
+        // Toggle between coupon status tabs
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -408,7 +429,8 @@
             });
         });
 
-        // 複製優惠碼
+        /* ========== COPY COUPON CODE ========== */
+        // Copy coupon code to clipboard
         function copyCode(code) {
             navigator.clipboard.writeText(code).then(() => {
                 alert('優惠碼已複製：' + code);

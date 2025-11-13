@@ -5,7 +5,16 @@ from flask.cli import AppGroup
 
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, ProductForm, CategoryForm
-from app.models import User, Category, Product, Article, Comment, Tag, ArticleTag, Source, Reaction, Author, Newsletter, Ticket
+from app.models import User, Category, Product, Article, Comment, Tag, ArticleTag, Source, Reaction, Author, Newsletter, Ticket, Coupon
+from app.data.coupon_system import (
+    create_welcome_coupon,
+    get_user_coupons,
+    validate_coupon,
+    use_coupon,
+    get_coupon_by_code,
+    get_coupon_info,
+    COUPON_TYPES
+)
 admin_cli = AppGroup('admin')
 
 @app.route("/")
@@ -67,7 +76,17 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Congraduations, you are now a registered user!')
+        
+        # Create welcome coupon for new user
+        try:
+            welcome_coupon = create_welcome_coupon(user.id)
+            if welcome_coupon:
+                flash(f'恭喜註冊成功！已送上迎新優惠券：{welcome_coupon.code}', 'success')
+            else:
+                flash('Congraduations, you are now a registered user!')
+        except:
+            flash('Congraduations, you are now a registered user!')
+        
         return redirect(url_for('login'))
     return render_template('register.html.j2', title="Register", form=form)
 
@@ -507,12 +526,33 @@ def cinema_buy_ticket():
     name = request.form['name']
     email = request.form['email']
     seats = int(request.form['seats'])
+    coupon_code = request.form.get('coupon_code', '').strip()  # Get coupon code if provided
     
     movie = next((m for m in movies if m['id'] == movie_id), None)
     
     if not movie:
         flash('電影不存在！', 'error')
         return redirect(url_for('cinema_index'))
+    
+    # Calculate base price
+    base_price = seats * 100  # HK$100 per seat
+    original_price = base_price
+    discount_amount = 0
+    coupon_used = None
+    
+    # Apply coupon if provided
+    if coupon_code:
+        coupon = get_coupon_by_code(coupon_code)
+        validation = validate_coupon(coupon, base_price, current_user.id)
+        
+        if validation['valid']:
+            discount_amount = validation['discount']
+            base_price = base_price - discount_amount
+            coupon_used = coupon
+            flash(f'✅ 已應用優惠券！折扣 HK${discount_amount:.2f}', 'success')
+        else:
+            flash(f'❌ 優惠券無效：{validation["message"]}', 'error')
+            # Continue with booking but without coupon
     
     # 創建新的票券記錄
     ticket = Ticket(
@@ -521,7 +561,10 @@ def cinema_buy_ticket():
         movie_title=movie['title'],
         showtime=showtime,
         seats=seats,
-        total_price=seats * 100,  # HK$100 per seat
+        original_price=original_price,
+        discount_amount=discount_amount,
+        total_price=base_price,
+        coupon_code=coupon_code if coupon_used else None,
         customer_name=name,
         customer_email=email,
         status='confirmed'
@@ -530,10 +573,15 @@ def cinema_buy_ticket():
     try:
         db.session.add(ticket)
         db.session.commit()
-        flash('購票成功！', 'success')
+        
+        # Mark coupon as used if it was applied
+        if coupon_used:
+            use_coupon(coupon_used, current_user.id, ticket.id)
+        
+        flash('✅ 購票成功！', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'購票失敗：{str(e)}', 'error')
+        flash(f'❌ 購票失敗：{str(e)}', 'error')
         return redirect(url_for('cinema_movie', movie_id=movie_id))
     
     # 將票券信息傳遞給成功頁面
@@ -545,7 +593,10 @@ def cinema_buy_ticket():
         'name': name,
         'email': email,
         'seats': seats,
-        'total_price': seats * 100
+        'original_price': original_price,
+        'discount_amount': discount_amount,
+        'total_price': base_price,
+        'coupon_code': coupon_code if coupon_used else None
     }
     
     return render_template('cinema_success.html.j2', ticket=ticket_info)
@@ -574,7 +625,10 @@ def my_bookings():
             'movie_title': ticket.movie_title,
             'showtime': ticket.showtime,
             'seats': ticket.seats,
+            'original_price': ticket.original_price if ticket.original_price else ticket.total_price,
+            'discount_amount': ticket.discount_amount if ticket.discount_amount else 0,
             'total_price': ticket.total_price,
+            'coupon_code': ticket.coupon_code,
             'name': ticket.customer_name,
             'email': ticket.customer_email,
             'booking_date': ticket.booking_date,
@@ -614,33 +668,33 @@ def cancel_ticket(ticket_id):
 @app.route('/my_coupons')
 @login_required
 def my_coupons():
-    # 示例優惠券數據
-    coupons = [
-        {
-            'id': 1,
-            'name': '週末優惠',
-            'discount': '8折',
-            'code': 'WEEKEND20',
-            'expiry': '2026-01-31',
-            'status': 'available'
-        },
-        {
-            'id': 2,
-            'name': '新會員優惠',
-            'discount': 'HK$50',
-            'code': 'NEWMEMBER50',
-            'expiry': '2025-12-31',
-            'status': 'available'
-        },
-        {
-            'id': 3,
-            'name': 'IMAX專場',
-            'discount': 'HK$30',
-            'code': 'IMAX30',
-            'expiry': '2025-11-30',
-            'status': 'used'
-        }
-    ]
+    # Get user's coupons from database
+    user_coupons = get_user_coupons(current_user.id, include_used=True)
+    
+    # Format coupons for template
+    coupons = []
+    for coupon in user_coupons:
+        coupon_info = get_coupon_info(coupon)
+        template = COUPON_TYPES.get(coupon.coupon_type, {})
+        
+        # Format discount display
+        if template.get('discount_type') == 'percentage':
+            discount_display = f"{template.get('discount_value')}% OFF"
+        else:
+            discount_display = f"HK${template.get('discount_value')}"
+        
+        coupons.append({
+            'id': coupon.id,
+            'name': coupon_info['name'],
+            'discount': discount_display,
+            'code': coupon.code,
+            'expiry': coupon.expiry_date.strftime('%Y-%m-%d'),
+            'status': 'used' if coupon.is_used else ('expired' if coupon.is_expired else 'available'),
+            'description': coupon_info['description'],
+            'icon': coupon_info['icon'],
+            'days_remaining': coupon_info['days_remaining']
+        })
+    
     return render_template('my_coupons.html.j2', coupons=coupons)
 
 # 修改個人資料頁面
@@ -724,4 +778,85 @@ def edit_profile():
             return redirect(url_for('edit_profile'))
     
     return render_template('edit_profile.html.j2')
+
+
+# ==========================================================
+# COUPON API ROUTES
+# Purpose: AJAX endpoints for coupon validation
+# ==========================================================
+
+@app.route('/api/validate_coupon', methods=['POST'])
+@login_required
+def api_validate_coupon():
+    """
+    Validate coupon code via AJAX
+    Returns JSON with validation result
+    """
+    data = request.get_json()
+    coupon_code = data.get('coupon_code', '').strip().upper()
+    order_total = float(data.get('order_total', 0))
+    
+    if not coupon_code:
+        return jsonify({
+            'valid': False,
+            'message': '請輸入優惠券代碼'
+        })
+    
+    # Get coupon from database
+    coupon = get_coupon_by_code(coupon_code)
+    
+    # Validate coupon
+    result = validate_coupon(coupon, order_total, current_user.id)
+    
+    if result['valid']:
+        # Get coupon info for display
+        coupon_info = get_coupon_info(coupon)
+        
+        return jsonify({
+            'valid': True,
+            'message': '✅ 優惠券有效！',
+            'discount': result['discount'],
+            'new_total': order_total - result['discount'],
+            'coupon_name': coupon_info['name'],
+            'coupon_description': coupon_info['description']
+        })
+    else:
+        return jsonify({
+            'valid': False,
+            'message': f'❌ {result["message"]}'
+        })
+
+
+@app.route('/api/get_user_coupons', methods=['GET'])
+@login_required
+def api_get_user_coupons():
+    """
+    Get available coupons for current user
+    Returns JSON list of coupons
+    """
+    # Get only valid coupons
+    user_coupons = get_user_coupons(current_user.id, include_used=False)
+    
+    coupons_data = []
+    for coupon in user_coupons:
+        coupon_info = get_coupon_info(coupon)
+        template = COUPON_TYPES.get(coupon.coupon_type, {})
+        
+        coupons_data.append({
+            'code': coupon.code,
+            'name': coupon_info['name'],
+            'description': coupon_info['description'],
+            'icon': coupon_info['icon'],
+            'discount_type': coupon_info['discount_type'],
+            'discount_value': coupon_info['discount_value'],
+            'min_purchase': coupon_info['min_purchase'],
+            'expiry_date': coupon.expiry_date.strftime('%Y-%m-%d'),
+            'days_remaining': coupon_info['days_remaining']
+        })
+    
+    return jsonify({
+        'success': True,
+        'coupons': coupons_data,
+        'count': len(coupons_data)
+    })
 

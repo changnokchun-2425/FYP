@@ -1,3 +1,14 @@
+{# ========================================
+   COMING SOON PAGE
+   ========================================
+   Purpose: Display upcoming movie releases
+   Features:
+   - Movie cards with release dates
+   - Release date badges
+   - Notify me buttons
+   - Timeline view
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>即將上映 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -114,6 +126,7 @@
             transform: scale(1.05);
         }
 
+        /* ========== RELEASE DATE BADGE ========== */
         .release-badge {
             position: absolute;
             top: 1rem;
@@ -222,7 +235,13 @@
     <nav>
         <a href="{{ url_for('cinema_index') }}">🎬 現正熱映</a>
         <a href="{{ url_for('cinema_coming_soon') }}" class="active">📅 即將上映</a>
-        <a href="{{ url_for('index') }}">🏠 返回主站</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}">🚪 登出</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">🔑 登入</a>
+        <a href="{{ url_for('register') }}">✨ 註冊</a>
+        {% endif %}
     </nav>
     
     <main>

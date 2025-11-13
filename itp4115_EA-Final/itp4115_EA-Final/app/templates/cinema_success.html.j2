@@ -1,3 +1,14 @@
+{# ========================================
+   BOOKING SUCCESS PAGE
+   ========================================
+   Purpose: Confirm successful ticket purchase
+   Features:
+   - Booking confirmation details
+   - QR code for entry
+   - Important instructions
+   - Links to view bookings or continue shopping
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>購票成功 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -51,6 +63,7 @@
             animation: checkmark 0.8s ease-in-out;
         }
 
+        /* ========== SUCCESS ANIMATION ========== */
         @keyframes checkmark {
             0% { transform: scale(0); }
             50% { transform: scale(1.2); }
@@ -203,13 +216,27 @@
     <header>
         <h1>🎬 FYP Cinema</h1>
     </header>
+
+    <nav style="background-color: #1a1a1a; padding: 1rem; text-align: center; border-bottom: 2px solid #2a5298;">
+        <a href="{{ url_for('cinema_index') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🎬 現正熱映</a>
+        <a href="{{ url_for('cinema_coming_soon') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">📅 即將上映</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🚪 登出</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🔑 登入</a>
+        <a href="{{ url_for('register') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">✨ 註冊</a>
+        {% endif %}
+    </nav>
     
     <main>
         <div class="success-message">
+            <!-- Success Icon -->
             <div class="success-icon">✅</div>
             <h2>購票成功！</h2>
             <p>感謝 <strong>{{ ticket.name }}</strong>，您的電影票已成功預訂。</p>
             
+            <!-- ========== TICKET DETAILS ========== -->
             <div class="ticket-info">
                 <h3>🎟️ 訂票詳情</h3>
                 <p><strong>🎬 電影：</strong>{{ ticket.movie_title }}</p>

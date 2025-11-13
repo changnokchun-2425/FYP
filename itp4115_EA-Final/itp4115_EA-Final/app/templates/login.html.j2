@@ -1,16 +1,32 @@
+{# ========================================
+   LOGIN PAGE
+   ========================================
+   Purpose: User authentication page
+   Features:
+   - Username/Password input
+   - Remember me checkbox
+   - Math captcha verification
+   - Flash message display
+   - Links to register page
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
+    <!-- ========== META TAGS ========== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登入 - FYP Cinema</title>
+    
+    <!-- ========== PAGE STYLES ========== -->
     <style>
-        * {
+        /* ========== GLOBAL RESET ========== */ {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        /* ========== BODY & LAYOUT ========== */
         body {
             font-family: 'Microsoft YaHei', 'Arial', sans-serif;
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
@@ -62,6 +78,25 @@
             margin-bottom: 2rem;
         }
 
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .alert-error {
+            background-color: rgba(229, 9, 20, 0.2);
+            border: 2px solid #e50914;
+            color: #ff6b6b;
+        }
+
+        /* ========== FORM ELEMENTS ========== */
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -146,6 +181,7 @@
             border-color: #e50914;
         }
 
+        /* ========== BUTTONS ========== */
         .submit-btn {
             width: 100%;
             padding: 1.2rem;
@@ -219,18 +255,37 @@
     </style>
 </head>
 <body>
+    <!-- ========================================
+         HEADER SECTION
+    ======================================== -->
     <header>
         <h1>🎬 FYP Cinema</h1>
     </header>
 
+    <!-- ========================================
+         LOGIN FORM CONTAINER
+    ======================================== -->
     <div class="login-container">
         <div class="login-box">
             <h2>會員登入</h2>
             <p class="subtitle">登入以享受更多優惠和服務</p>
 
+            <!-- Flash Messages Display -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="alert alert-error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Login Form -->
             <form action="" method="post" novalidate>
                 {{ form.hidden_tag() }}
                 
+                <!-- Username Field -->
                 <div class="form-group">
                     {{ form.username.label }}
                     {{ form.username(size=32) }}
@@ -275,8 +330,12 @@
         <p>&copy; 2025 FYP Cinema. All rights reserved.</p>
     </footer>
 
+    <!-- ========================================
+         JAVASCRIPT - Captcha Validation
+    ======================================== -->
     <script>
-        // Simple math captcha
+        /* ========== CAPTCHA GENERATION ========== */
+        // Generate random math problem for captcha
         let num1, num2, correctAnswer;
 
         function generateCaptcha() {

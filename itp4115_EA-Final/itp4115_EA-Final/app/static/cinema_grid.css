@@ -1,0 +1,208 @@
+/* ========================================
+   CINEMA GRID STYLES
+   ========================================
+   
+   Purpose: Movie grid layouts and card components
+   Usage: For pages displaying movie grids (cinema_index, cinema_coming_soon, my_movies)
+   
+   Sections:
+   1. Main Container
+   2. Grid Layout
+   3. Movie Cards
+   4. Card Hover Effects
+   5. Movie Meta Information
+   6. Responsive Grid
+   
+======================================== */
+
+/* ==========================================================
+   SECTION 1: MAIN CONTAINER
+   Purpose: Container for all movie content
+========================================================== */
+main {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+main h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    background: linear-gradient(90deg, #e50914, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==========================================================
+   SECTION 2: GRID LAYOUT
+   Purpose: Responsive grid system for movie cards
+   
+   Configuration:
+   - Auto-fill columns
+   - Minimum card width: 280px
+   - Gap: 2.5rem
+========================================================== */
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+/* ==========================================================
+   SECTION 3: MOVIE CARDS
+   Purpose: Individual movie card styling
+   
+   Structure:
+   - Dark background gradient
+   - Rounded corners
+   - Shadow effect
+   - Image + Info sections
+========================================================== */
+.movie-card {
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    border: 1px solid #333;
+}
+
+.movie-card img {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    transition: transform 0.3s;
+    display: block;
+}
+
+/* ==========================================================
+   SECTION 4: CARD HOVER EFFECTS
+   Purpose: Interactive feedback on hover
+   
+   Effects:
+   - Card lifts up (translateY)
+   - Red shadow glow
+   - Image zoom
+========================================================== */
+.movie-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 12px 20px rgba(229, 9, 20, 0.4);
+}
+
+.movie-card:hover img {
+    transform: scale(1.05);
+}
+
+/* ==========================================================
+   SECTION 5: MOVIE META INFORMATION
+   Purpose: Movie details inside cards
+   
+   Elements:
+   - Title
+   - Duration, Rating tags
+   - Genre
+   - Description
+   - Action button
+========================================================== */
+.movie-info {
+    padding: 1.5rem;
+}
+
+.movie-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+
+.movie-meta {
+    display: flex;
+    gap: 1rem;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #aaa;
+    flex-wrap: wrap;
+}
+
+.movie-meta span {
+    background-color: #2a2a2a;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+.movie-info p {
+    color: #cccccc;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.movie-info .genre {
+    color: #e50914;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+/* ==========================================================
+   SECTION 6: RESPONSIVE GRID
+   Purpose: Adapt grid for mobile devices
+   
+   Mobile (< 768px):
+   - Single column layout
+   - Reduced gap
+   - Smaller title
+========================================================== */
+@media (max-width: 768px) {
+    main {
+        padding: 0 1rem;
+    }
+
+    main h2 {
+        font-size: 2rem;
+    }
+
+    .movie-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .movie-card img {
+        height: 350px;
+    }
+
+    .movie-info {
+        padding: 1.2rem;
+    }
+
+    .movie-info h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* ==========================================================
+   EMPTY STATE
+   Purpose: Display when no movies found
+========================================================== */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    border-radius: 15px;
+    border: 2px dashed #444;
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    color: #888;
+    margin-bottom: 1rem;
+}
+
+.empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}

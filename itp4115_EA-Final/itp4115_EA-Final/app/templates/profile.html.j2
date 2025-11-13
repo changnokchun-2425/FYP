@@ -1,3 +1,15 @@
+{# ========================================
+   USER PROFILE PAGE
+   ========================================
+   Purpose: Display user account information and quick actions
+   Features:
+   - Account information display
+   - Membership status
+   - Recent activity stats
+   - Quick action buttons
+   - Admin-specific features
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>會員中心 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -233,21 +246,26 @@
 
     <nav>
         <a href="{{ url_for('cinema_index') }}">🎬 電影</a>
-        <a href="{{ url_for('cinema_index') }}">🎟️ 購票</a>
-        <a href="{{ url_for('profile') }}">👤 個人資料</a>
+        <a href="{{ url_for('cinema_coming_soon') }}">📅 即將上映</a>
+        <a href="{{ url_for('profile') }}" class="active">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}">🚪 登出</a>
     </nav>
 
     <div class="container">
-        <!-- Profile Header -->
+        <!-- ========================================
+             PROFILE HEADER - Avatar & User Info
+        ======================================== -->
         <div class="profile-header">
             <div class="profile-avatar">👤</div>
             <h2>{{ user.username }}</h2>
             <span class="profile-badge">{{ '🌟 管理員' if user.is_admin else '🎫 會員' }}</span>
         </div>
 
-        <!-- Info Cards -->
+        <!-- ========================================
+             INFORMATION CARDS
+        ======================================== -->
         <div class="info-grid">
-            <!-- Account Information -->
+            <!-- Account Information Card -->
             <div class="info-card">
                 <h3>📋 帳號資訊</h3>
                 <div class="info-row">

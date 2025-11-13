@@ -1,3 +1,15 @@
+{# ========================================
+   MOVIE DETAIL PAGE
+   ========================================
+   Purpose: Display individual movie information and booking form
+   Features:
+   - Movie poster and details
+   - Showtime selection
+   - Ticket booking form
+   - Price calculation
+   - Login required for booking
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ movie.title }} - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -23,31 +36,12 @@
             padding: 2rem;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            position: relative;
         }
 
         header h1 {
             font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .back-link {
-            position: absolute;
-            left: 2rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #fff;
-            text-decoration: none;
-            font-size: 1.2rem;
-            padding: 0.5rem 1rem;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        .back-link:hover {
-            background-color: rgba(255,255,255,0.2);
         }
 
         main {
@@ -108,6 +102,7 @@
             margin-bottom: 2rem;
         }
 
+        /* ========== BOOKING FORM STYLES ========== */
         .booking-form {
             background-color: #2a2a2a;
             padding: 2.5rem;
@@ -183,6 +178,86 @@
             font-size: 1rem;
         }
 
+        /* ========== COUPON SECTION STYLES ========== */
+        .coupon-section {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.3), rgba(42, 82, 152, 0.3));
+            border-radius: 10px;
+            border: 2px dashed #2a5298;
+        }
+
+        .coupon-section h4 {
+            color: #4CAF50;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .coupon-select-wrapper {
+            position: relative;
+        }
+
+        .coupon-select-wrapper select {
+            padding-right: 3rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e50914' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            appearance: none;
+        }
+
+        .coupon-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            display: none;
+        }
+
+        .coupon-info.active {
+            display: block;
+        }
+
+        .coupon-info p {
+            margin: 0.3rem 0;
+            color: #81c784;
+            font-size: 0.95rem;
+        }
+
+        .discount-row {
+            color: #4CAF50 !important;
+            font-weight: bold;
+        }
+
+        .btn-validate {
+            margin-top: 0.8rem;
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-validate:hover {
+            background: linear-gradient(135deg, #66BB6A, #4CAF50);
+            transform: translateY(-1px);
+        }
+
+        .coupon-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background-color: #e50914;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+            font-weight: bold;
+        }
+
         footer {
             background-color: #0a0a0a;
             text-align: center;
@@ -225,9 +300,20 @@
 </head>
 <body>
     <header>
-        <a href="{{ url_for('cinema_index') }}" class="back-link">← 返回首頁</a>
         <h1>🎬 FYP Cinema</h1>
     </header>
+
+    <nav style="background-color: #1a1a1a; padding: 1rem; text-align: center; border-bottom: 2px solid #2a5298;">
+        <a href="{{ url_for('cinema_index') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🎬 現正熱映</a>
+        <a href="{{ url_for('cinema_coming_soon') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">📅 即將上映</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🚪 登出</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🔑 登入</a>
+        <a href="{{ url_for('register') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">✨ 註冊</a>
+        {% endif %}
+    </nav>
     
     <main>
         <div class="movie-detail">
@@ -264,9 +350,43 @@
                         <label for="seats">座位數量：</label>
                         <input type="number" name="seats" id="seats" min="1" max="10" value="1" required onchange="updatePrice()">
                         
+                        <!-- ========================================
+                             COUPON SELECTION SECTION
+                        ======================================== -->
+                        <div class="coupon-section">
+                            <h4>🎫 優惠券 (可選)</h4>
+                            
+                            <div class="coupon-select-wrapper">
+                                <label for="coupon_code">選擇優惠券：</label>
+                                <select name="coupon_code" id="coupon_code" onchange="applyCoupon()">
+                                    <option value="">不使用優惠券</option>
+                                    <option value="manual">手動輸入優惠券代碼</option>
+                                    <optgroup label="我的優惠券" id="userCouponsGroup">
+                                        <!-- User coupons will be loaded here via JavaScript -->
+                                    </optgroup>
+                                </select>
+                            </div>
+                            
+                            <!-- Manual coupon input (hidden by default) -->
+                            <div id="manualCouponInput" style="display: none; margin-top: 1rem;">
+                                <label for="manual_coupon_code">輸入優惠券代碼：</label>
+                                <input type="text" id="manual_coupon_code" placeholder="例如: WELCOME-ABC123" style="text-transform: uppercase;">
+                                <button type="button" class="btn-validate" onclick="validateManualCoupon()">✓ 驗證優惠券</button>
+                            </div>
+                            
+                            <!-- Coupon info display -->
+                            <div id="couponInfo" class="coupon-info">
+                                <p id="couponName">📌 <strong>優惠券名稱：</strong><span></span></p>
+                                <p id="couponDiscount">💰 <strong>折扣：</strong><span></span></p>
+                                <p id="couponExpiry">📅 <strong>有效期至：</strong><span></span></p>
+                            </div>
+                        </div>
+                        
                         <div class="price-info">
                             <p><strong>票價：</strong>HK$100 / 張</p>
-                            <p id="totalPrice"><strong>總計：</strong>HK$100</p>
+                            <p id="originalPrice" style="display: none;"><strong>原價：</strong>HK$<span>100</span></p>
+                            <p id="discountAmount" style="display: none;" class="discount-row"><strong>優惠：</strong>-HK$<span>0</span></p>
+                            <p id="totalPrice"><strong>總計：</strong>HK$<span>100</span></p>
                         </div>
                         
                         <button type="submit">🎫 確認購票</button>
@@ -289,13 +409,192 @@
         <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
     </footer>
 
+    <!-- ========================================
+         JAVASCRIPT - Price Calculator & Coupon Handler
+    ======================================== -->
     <script>
-        function updatePrice() {
-            const seats = document.getElementById('seats').value;
-            const pricePerSeat = 100;
-            const total = seats * pricePerSeat;
-            document.getElementById('totalPrice').innerHTML = '<strong>總計：</strong>HK$' + total;
+        // Store available coupons and current discount
+        let availableCoupons = [];
+        let currentDiscount = 0;
+        let currentCouponCode = '';
+        
+        /* Load user's available coupons on page load */
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadUserCoupons();
+        });
+        
+        /* Fetch user's coupons from API */
+        async function loadUserCoupons() {
+            try {
+                const response = await fetch('/api/get_user_coupons');
+                const data = await response.json();
+                
+                if (data.success && data.coupons.length > 0) {
+                    availableCoupons = data.coupons;
+                    const optgroup = document.getElementById('userCouponsGroup');
+                    
+                    data.coupons.forEach(coupon => {
+                        const option = document.createElement('option');
+                        option.value = coupon.code;
+                        option.textContent = `${coupon.icon} ${coupon.name} - ${formatDiscount(coupon)}`;
+                        option.dataset.coupon = JSON.stringify(coupon);
+                        optgroup.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load coupons:', error);
+            }
         }
+        
+        /* Format discount for display */
+        function formatDiscount(coupon) {
+            if (coupon.discount_type === 'percentage') {
+                return `${coupon.discount_value}% OFF`;
+            } else {
+                return `HK$${coupon.discount_value} OFF`;
+            }
+        }
+        
+        /* Handle coupon selection from dropdown */
+        function applyCoupon() {
+            const select = document.getElementById('coupon_code');
+            const selectedValue = select.value;
+            const manualInput = document.getElementById('manualCouponInput');
+            const couponInfo = document.getElementById('couponInfo');
+            
+            // Reset
+            manualInput.style.display = 'none';
+            couponInfo.classList.remove('active');
+            currentDiscount = 0;
+            currentCouponCode = '';
+            
+            if (selectedValue === 'manual') {
+                // Show manual input
+                manualInput.style.display = 'block';
+            } else if (selectedValue) {
+                // Apply selected coupon
+                const selectedOption = select.options[select.selectedIndex];
+                const couponData = JSON.parse(selectedOption.dataset.coupon);
+                displayCouponInfo(couponData);
+                validateAndApplyDiscount(selectedValue);
+            }
+            
+            updatePrice();
+        }
+        
+        /* Validate and apply manual coupon code */
+        async function validateManualCoupon() {
+            const manualCode = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
+            
+            if (!manualCode) {
+                alert('請輸入優惠券代碼');
+                return;
+            }
+            
+            await validateAndApplyDiscount(manualCode);
+        }
+        
+        /* Validate coupon and apply discount */
+        async function validateAndApplyDiscount(couponCode) {
+            const seats = parseInt(document.getElementById('seats').value) || 1;
+            const orderTotal = seats * 100;
+            
+            try {
+                const response = await fetch('/api/validate_coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coupon_code: couponCode,
+                        order_total: orderTotal
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.valid) {
+                    currentDiscount = result.discount;
+                    currentCouponCode = couponCode;
+                    
+                    // Update coupon code field to ensure it's submitted
+                    document.getElementById('coupon_code').value = couponCode;
+                    
+                    // Show success message
+                    alert(`✅ ${result.message}\n折扣：HK$${result.discount.toFixed(2)}`);
+                    
+                    // Display coupon info if available
+                    if (result.coupon_name) {
+                        displayCouponInfo({
+                            name: result.coupon_name,
+                            description: result.coupon_description,
+                            discount_value: result.discount
+                        });
+                    }
+                } else {
+                    alert(`❌ ${result.message}`);
+                    currentDiscount = 0;
+                    currentCouponCode = '';
+                }
+                
+                updatePrice();
+            } catch (error) {
+                console.error('Validation error:', error);
+                alert('❌ 優惠券驗證失敗，請稍後再試');
+            }
+        }
+        
+        /* Display coupon information */
+        function displayCouponInfo(coupon) {
+            const couponInfo = document.getElementById('couponInfo');
+            
+            document.querySelector('#couponName span').textContent = coupon.name || '優惠券';
+            document.querySelector('#couponDiscount span').textContent = coupon.description || formatDiscount(coupon);
+            
+            if (coupon.expiry_date) {
+                document.querySelector('#couponExpiry span').textContent = coupon.expiry_date;
+                document.getElementById('couponExpiry').style.display = 'block';
+            } else {
+                document.getElementById('couponExpiry').style.display = 'none';
+            }
+            
+            couponInfo.classList.add('active');
+        }
+        
+        /* Calculate and update total price with discount */
+        function updatePrice() {
+            const seats = parseInt(document.getElementById('seats').value) || 1;
+            const pricePerSeat = 100;
+            const subtotal = seats * pricePerSeat;
+            
+            // Calculate final total with discount
+            const discount = Math.min(currentDiscount, subtotal); // Discount can't exceed total
+            const total = subtotal - discount;
+            
+            // Update price display
+            if (discount > 0) {
+                document.getElementById('originalPrice').style.display = 'block';
+                document.getElementById('discountAmount').style.display = 'block';
+                document.querySelector('#originalPrice span').textContent = subtotal.toFixed(2);
+                document.querySelector('#discountAmount span').textContent = discount.toFixed(2);
+            } else {
+                document.getElementById('originalPrice').style.display = 'none';
+                document.getElementById('discountAmount').style.display = 'none';
+            }
+            
+            document.querySelector('#totalPrice span').textContent = total.toFixed(2);
+        }
+        
+        /* Ensure coupon code is included in form submission */
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            if (currentCouponCode) {
+                // Make sure the coupon code is set
+                const couponInput = document.getElementById('coupon_code');
+                if (couponInput.value === 'manual') {
+                    couponInput.value = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
+                }
+            }
+        });
     </script>
 </body>
 </html>

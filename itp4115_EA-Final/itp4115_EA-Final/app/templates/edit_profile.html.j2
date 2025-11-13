@@ -1,3 +1,15 @@
+{# ========================================
+   EDIT PROFILE PAGE
+   ========================================
+   Purpose: Allow users to update their account information
+   Features:
+   - Update username, email, phone
+   - Change password
+   - Avatar upload (placeholder)
+   - Delete account option
+   - Form validation
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>修改個人資料 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -13,9 +26,10 @@
 
         body {
             font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #fff;
         }
 
         .container {
@@ -28,10 +42,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .header h1 {
@@ -60,14 +74,15 @@
         }
 
         .profile-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
         }
 
         .avatar-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e50914, #b20710);
             padding: 40px 20px;
             text-align: center;
             position: relative;
@@ -126,10 +141,10 @@
         .section-title {
             font-size: 20px;
             font-weight: bold;
-            color: #1e3c72;
+            color: #e50914;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            border-bottom: 2px solid #333;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -143,7 +158,7 @@
             display: block;
             font-size: 14px;
             font-weight: bold;
-            color: #333;
+            color: #fff;
             margin-bottom: 8px;
         }
 
@@ -154,17 +169,19 @@
         .form-input {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #444;
             border-radius: 8px;
             font-size: 16px;
             transition: all 0.3s;
             font-family: inherit;
+            background-color: #1a1a1a;
+            color: white;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #1e3c72;
-            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+            border-color: #e50914;
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
         }
 
         .form-input:disabled {
@@ -205,7 +222,7 @@
             gap: 15px;
             margin-top: 30px;
             padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
+            border-top: 2px solid #333;
         }
 
         .submit-btn {
@@ -229,9 +246,9 @@
         .cancel-btn {
             flex: 1;
             padding: 15px;
-            background: #fff;
-            color: #666;
-            border: 2px solid #e0e0e0;
+            background: #2a2a2a;
+            color: #fff;
+            border: 2px solid #444;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
@@ -245,8 +262,8 @@
         }
 
         .cancel-btn:hover {
-            border-color: #1e3c72;
-            color: #1e3c72;
+            border-color: #e50914;
+            background: #333;
         }
 
         .danger-zone {
@@ -380,6 +397,7 @@
                 {% endwith %}
 
                 <form method="POST" action="{{ url_for('edit_profile') }}">
+                    <!-- ========== BASIC INFORMATION SECTION ========== -->
                     <div class="section-title">
                         👤 基本資料
                     </div>
@@ -426,6 +444,7 @@
                         </div>
                     </div>
 
+                    <!-- ========== PASSWORD CHANGE SECTION ========== -->
                     <div class="section-title" style="margin-top: 40px;">
                         🔒 更改密碼
                     </div>
@@ -500,8 +519,12 @@
         </div>
     </div>
 
+    <!-- ========================================
+         JAVASCRIPT - Form Validation & Password Toggle
+    ======================================== -->
     <script>
-        // 顯示/隱藏密碼
+        /* ========== PASSWORD VISIBILITY TOGGLE ========== */
+        // Show/hide password fields
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const button = input.nextElementSibling;

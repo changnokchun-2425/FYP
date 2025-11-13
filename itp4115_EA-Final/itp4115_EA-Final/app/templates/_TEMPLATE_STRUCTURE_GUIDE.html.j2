@@ -1,0 +1,701 @@
+{# ========================================
+   TEMPLATE STRUCTURE GUIDE
+   ========================================
+   
+   This file demonstrates the standard structure
+   used across all templates in this application.
+   
+   Use this as a reference when creating new
+   templates or understanding existing ones.
+   
+   DO NOT RENDER THIS FILE - It's for reference only
+   
+======================================== #}
+
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    {# ==========================================
+       META TAGS SECTION
+       
+       Purpose: Define page metadata and encoding
+       Required: charset, viewport
+       Optional: description, keywords, author
+    ========================================== #}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Page description here">
+    
+    {# ==========================================
+       PAGE TITLE
+       
+       Format: Specific Page Name - FYP Cinema
+       Example: "登入 - FYP Cinema"
+    ========================================== #}
+    <title>Page Title - FYP Cinema</title>
+    
+    {# ==========================================
+       EXTERNAL STYLESHEETS
+       
+       Load order:
+       1. Bootstrap (if needed)
+       2. Custom CSS files from static/
+       3. Font libraries (if needed)
+    ========================================== #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='cinema.css') }}">
+    
+    {# ==========================================
+       PAGE-SPECIFIC STYLES
+       
+       Organization within <style> tag:
+       1. Global Reset
+       2. Body & Layout
+       3. Header Styles
+       4. Navigation Styles
+       5. Main Content Styles
+       6. Form Elements
+       7. Buttons & CTAs
+       8. Footer Styles
+       9. Responsive Media Queries
+       10. Animations
+    ========================================== #}
+    <style>
+        /* ==========================================================
+           SECTION 1: GLOBAL RESET
+           Purpose: Remove browser default styling
+        ========================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ==========================================================
+           SECTION 2: BODY & LAYOUT
+           Purpose: Set up main page structure and background
+           
+           Standard Values:
+           - Background: #0a0a0a to #1a1a1a gradient
+           - Font: 'Microsoft YaHei', 'Arial', sans-serif
+           - Text color: #ffffff
+        ========================================================== */
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ==========================================================
+           SECTION 3: HEADER STYLES
+           Purpose: Cinema branding header
+           
+           Standard Values:
+           - Background: #1e3c72 to #2a5298 gradient
+           - Padding: 2rem
+           - Shadow: 0 4px 6px rgba(0,0,0,0.3)
+        ========================================================== */
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* ==========================================================
+           SECTION 4: NAVIGATION STYLES
+           Purpose: Main navigation bar
+           
+           Standard Structure:
+           - Background: #1a1a1a
+           - Links: White text, red (#e50914) on hover
+           - Border bottom: #2a5298
+        ========================================================== */
+        nav {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #2a5298;
+        }
+
+        nav a {
+            color: #ffffff;
+            text-decoration: none;
+            margin: 0 1.5rem;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: #e50914;
+        }
+
+        /* ==========================================================
+           SECTION 5: MAIN CONTENT STYLES
+           Purpose: Page-specific content area
+           
+           Common Patterns:
+           - Max-width: 1400px for grids, 800px for forms
+           - Margin: 2rem-3rem auto
+           - Padding: 0 2rem (horizontal)
+        ========================================================== */
+        main {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Grid Layout for Cards */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        /* ==========================================================
+           SECTION 6: FORM ELEMENTS
+           Purpose: Input fields, labels, error messages
+           
+           Standard Styling:
+           - Background: #1a1a1a
+           - Border: 2px solid #444
+           - Focus border: #e50914
+           - Error color: #ff6b6b
+        ========================================================== */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+            display: block;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .alert-error {
+            background-color: rgba(229, 9, 20, 0.2);
+            border: 2px solid #e50914;
+            color: #ff6b6b;
+        }
+
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            color: #81c784;
+        }
+
+        /* ==========================================================
+           SECTION 7: BUTTONS & CALL-TO-ACTION
+           Purpose: Interactive buttons
+           
+           Primary Button:
+           - Background: #e50914 to #b20710 gradient
+           - Hover: Lift effect + stronger shadow
+           
+           Secondary Button:
+           - Background: #2a2a2a
+           - Border: #444
+        ========================================================== */
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #ff1a24, #e50914);
+            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.5);
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+            border-color: #e50914;
+        }
+
+        /* ==========================================================
+           SECTION 8: FOOTER STYLES
+           Purpose: Site footer with copyright
+           
+           Standard Values:
+           - Background: #0a0a0a
+           - Border-top: #2a5298
+           - Text color: #888
+        ========================================================== */
+        footer {
+            background-color: #0a0a0a;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 2px solid #2a5298;
+        }
+
+        footer p {
+            color: #888;
+            margin: 0.5rem 0;
+        }
+
+        /* ==========================================================
+           SECTION 9: RESPONSIVE DESIGN - MOBILE
+           Purpose: Adapt layout for smaller screens
+           
+           Breakpoint: 768px
+           Common Changes:
+           - Grid: 1 column
+           - Font sizes: Reduce by 20-30%
+           - Padding: Reduce margins
+           - Navigation: Stack vertically
+        ========================================================== */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav a {
+                display: inline-block;
+                margin: 0.5rem;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            main {
+                padding: 0 1rem;
+            }
+        }
+
+        /* ==========================================================
+           SECTION 10: ANIMATIONS
+           Purpose: Smooth transitions and effects
+           
+           Common Animations:
+           - fadeIn: Opacity 0 to 1
+           - slideIn: TranslateY movement
+           - pulse: Scale effect
+        ========================================================== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    {# ==========================================
+       HTML BODY STRUCTURE
+       
+       Standard Order:
+       1. Header (Cinema branding)
+       2. Navigation bar
+       3. Flash messages (if any)
+       4. Main content
+       5. Footer
+       6. JavaScript
+    ========================================== #}
+
+    <!-- ==========================================================
+         SECTION 1: HEADER
+         
+         Contains:
+         - Cinema logo/title
+         - Tagline/subtitle
+         
+         Appears on: All pages
+    ========================================================== -->
+    <header>
+        <h1>🎬 FYP Cinema</h1>
+        <p>香港首選電影院線 - 極致觀影體驗</p>
+    </header>
+
+    <!-- ==========================================================
+         SECTION 2: NAVIGATION BAR
+         
+         Contains:
+         - Now Showing link
+         - Coming Soon link
+         - User-specific links (Profile/Login)
+         
+         Dynamic Content:
+         - Shows Profile/Logout if authenticated
+         - Shows Login/Register if not authenticated
+         
+         Implementation:
+         {% if current_user.is_authenticated %}
+             <!-- Logged in user links -->
+         {% else %}
+             <!-- Guest user links -->
+         {% endif %}
+    ========================================================== -->
+    <nav>
+        <a href="{{ url_for('cinema_index') }}">🎬 現正熱映</a>
+        <a href="{{ url_for('cinema_coming_soon') }}">📅 即將上映</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}">🚪 登出</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">🔑 登入</a>
+        <a href="{{ url_for('register') }}">✨ 註冊</a>
+        {% endif %}
+    </nav>
+
+    <!-- ==========================================================
+         SECTION 3: FLASH MESSAGES
+         
+         Purpose: Display one-time messages to users
+         
+         Types:
+         - success: Green - Successful operations
+         - error: Red - Error messages
+         - info: Blue - Informational messages
+         
+         Implementation:
+         {% with messages = get_flashed_messages() %}
+             {% if messages %}
+                 <!-- Display each message -->
+             {% endif %}
+         {% endwith %}
+         
+         Usage in routes.py:
+         flash('Message here', 'success')
+         flash('Error message', 'error')
+    ========================================================== -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages" style="max-width: 1400px; margin: 1rem auto; padding: 0 2rem;">
+                {% for message in messages %}
+                    <div class="alert alert-error">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- ==========================================================
+         SECTION 4: MAIN CONTENT
+         
+         This is where page-specific content goes.
+         
+         Common Patterns:
+         
+         A. LIST/GRID PAGES (cinema_index, my_movies, etc.)
+            <main>
+                <h2>Section Title</h2>
+                <div class="grid-container">
+                    {% for item in items %}
+                        <div class="card">
+                            <!-- Card content -->
+                        </div>
+                    {% endfor %}
+                </div>
+            </main>
+         
+         B. FORM PAGES (login, register, edit_profile)
+            <main>
+                <div class="form-container">
+                    <h2>Form Title</h2>
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <!-- Form fields -->
+                    </form>
+                </div>
+            </main>
+         
+         C. DETAIL PAGES (cinema_movie, profile)
+            <main>
+                <div class="detail-container">
+                    <!-- Detailed information -->
+                    <!-- Related actions -->
+                </div>
+            </main>
+    ========================================================== -->
+    <main>
+        <h2>Page Title</h2>
+        
+        {# Example: Grid Layout #}
+        <div class="grid-container">
+            {# Loop through items from database or route #}
+            {% for item in items %}
+            <div class="card">
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.description }}</p>
+                <a href="{{ url_for('detail_page', id=item.id) }}" class="btn">View Details</a>
+            </div>
+            {% endfor %}
+            
+            {# Handle empty state #}
+            {% if not items or items|length == 0 %}
+            <div class="empty-state">
+                <p>No items found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- ==========================================================
+         SECTION 5: FOOTER
+         
+         Contains:
+         - Copyright notice
+         - Contact information
+         - Links (optional)
+         
+         Appears on: All pages
+    ========================================================== -->
+    <footer>
+        <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
+    </footer>
+
+    <!-- ==========================================================
+         SECTION 6: JAVASCRIPT
+         
+         Organization:
+         1. Page initialization
+         2. Event listeners
+         3. Helper functions
+         4. Form validation
+         5. AJAX calls (if needed)
+         
+         Best Practices:
+         - Use descriptive function names
+         - Add comments for complex logic
+         - Handle errors gracefully
+         - Use const/let instead of var
+    ========================================================== -->
+    <script>
+        /* ==========================================================
+           INITIALIZATION
+           Runs when DOM is fully loaded
+        ========================================================== */
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded successfully');
+            // Initialize components here
+        });
+
+        /* ==========================================================
+           EVENT LISTENERS
+           Attach events to interactive elements
+        ========================================================== */
+        
+        // Example: Button click handler
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Handle click event
+            });
+        });
+
+        /* ==========================================================
+           HELPER FUNCTIONS
+           Reusable utility functions
+        ========================================================== */
+        
+        /**
+         * Format currency to HK$ format
+         * @param {number} amount - Amount in dollars
+         * @returns {string} Formatted currency string
+         */
+        function formatCurrency(amount) {
+            return 'HK$' + amount.toFixed(2);
+        }
+
+        /**
+         * Validate email format
+         * @param {string} email - Email address
+         * @returns {boolean} True if valid
+         */
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        /* ==========================================================
+           FORM VALIDATION
+           Client-side validation before submission
+        ========================================================== */
+        
+        // Example: Form validation
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Validate form fields
+                const isValid = validateForm(this);
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields');
+                }
+            });
+        });
+
+        function validateForm(form) {
+            // Validation logic
+            return true;
+        }
+
+        /* ==========================================================
+           AJAX REQUESTS (Optional)
+           For dynamic content loading without page refresh
+        ========================================================== */
+        
+        /**
+         * Fetch data from API
+         * @param {string} url - API endpoint
+         * @returns {Promise} Response data
+         */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return null;
+            }
+        }
+    </script>
+</body>
+</html>
+
+{# ==========================================
+   COMMON JINJA2 PATTERNS
+   
+   1. VARIABLES
+   {{ variable_name }}
+   {{ user.username }}
+   {{ movie.title }}
+   
+   2. CONDITIONALS
+   {% if condition %}
+       <!-- True content -->
+   {% else %}
+       <!-- False content -->
+   {% endif %}
+   
+   3. LOOPS
+   {% for item in items %}
+       <p>{{ item.name }}</p>
+   {% endfor %}
+   
+   4. URL GENERATION
+   {{ url_for('route_name') }}
+   {{ url_for('route_name', param=value) }}
+   
+   5. FILTERS
+   {{ text|upper }}
+   {{ items|length }}
+   {{ price|round(2) }}
+   
+   6. TEMPLATE INHERITANCE
+   {% extends "base.html.j2" %}
+   {% block content %}
+       <!-- Page content -->
+   {% endblock %}
+   
+   7. INCLUDE
+   {% include 'component.html.j2' %}
+   
+   8. COMMENTS
+   {# Single line comment #}
+   
+   {# Multi-line
+      comment #}
+
+========================================== #}

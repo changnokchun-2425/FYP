@@ -172,6 +172,9 @@ class Ticket(db.Model):
     showtime = db.Column(db.String(64), nullable=False)
     seats = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
+    original_price = db.Column(db.Float, nullable=True)  # Price before discount
+    discount_amount = db.Column(db.Float, default=0)  # Discount applied
+    coupon_code = db.Column(db.String(64), nullable=True)  # Coupon code used
     customer_name = db.Column(db.String(64), nullable=False)
     customer_email = db.Column(db.String(120), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -181,3 +184,35 @@ class Ticket(db.Model):
     
     def __repr__(self):
         return f'<Ticket {self.movie_title} - {self.customer_name}>'
+
+
+class Coupon(db.Model):
+    """Represents a discount coupon."""
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    coupon_type = db.Column(db.String(32), nullable=False)  # WELCOME, BIRTHDAY, FIXED50, etc.
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Null means public coupon
+    expiry_date = db.Column(db.DateTime, nullable=False)
+    is_used = db.Column(db.Boolean, default=False)
+    used_date = db.Column(db.DateTime, nullable=True)
+    used_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    booking_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=True)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    owner = db.relationship('User', foreign_keys=[user_id], backref='owned_coupons')
+    used_by = db.relationship('User', foreign_keys=[used_by_user_id], backref='used_coupons')
+    booking = db.relationship('Ticket', backref='coupon_used', foreign_keys=[booking_id])
+    
+    def __repr__(self):
+        return f'<Coupon {self.code} - {self.coupon_type}>'
+    
+    @property
+    def is_expired(self):
+        """Check if coupon is expired."""
+        return datetime.utcnow() > self.expiry_date
+    
+    @property
+    def is_valid(self):
+        """Check if coupon is still valid (not used and not expired)."""
+        return not self.is_used and not self.is_expired

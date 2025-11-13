@@ -1,3 +1,14 @@
+{# ========================================
+   MY MOVIES PAGE
+   ========================================
+   Purpose: Browse and discover movies
+   Features:
+   - Movie browsing grid
+   - Genre filters
+   - Viewing statistics
+   - Quick booking buttons
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -5,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>瀏覽電影 - FYP Cinema</title>
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
@@ -13,9 +25,10 @@
 
         body {
             font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #fff;
         }
 
         .container {
@@ -28,10 +41,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .header h1 {
@@ -59,18 +72,20 @@
             transform: translateY(-2px);
         }
 
+        /* ========== FILTER SECTION ========== */
         .filter-section {
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             padding: 20px;
             border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
         }
 
         .filter-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e3c72;
+            color: #e50914;
             margin-bottom: 15px;
         }
 
@@ -82,9 +97,9 @@
 
         .filter-btn {
             padding: 8px 20px;
-            border: 2px solid #1e3c72;
-            background: #fff;
-            color: #1e3c72;
+            border: 2px solid #444;
+            background: #1a1a1a;
+            color: #fff;
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s;
@@ -93,7 +108,8 @@
 
         .filter-btn:hover,
         .filter-btn.active {
-            background: #1e3c72;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            border-color: #e50914;
             color: #fff;
         }
 
@@ -105,12 +121,13 @@
         }
 
         .movie-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             border-radius: 15px;
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
         }
 
         .movie-card:hover {
@@ -149,7 +166,7 @@
         .movie-title {
             font-size: 18px;
             font-weight: bold;
-            color: #1e3c72;
+            color: #fff;
             margin-bottom: 8px;
         }
 
@@ -172,7 +189,7 @@
 
         .movie-description {
             font-size: 14px;
-            color: #666;
+            color: #ccc;
             line-height: 1.6;
             margin-bottom: 15px;
         }

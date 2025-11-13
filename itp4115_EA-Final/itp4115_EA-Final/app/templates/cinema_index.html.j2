@@ -1,17 +1,34 @@
+{# ========================================
+   CINEMA INDEX PAGE - Now Showing Movies
+   ========================================
+   Purpose: Display currently showing movies in grid layout
+   Features: 
+   - Movie cards with posters and details
+   - Navigation bar
+   - Responsive grid layout
+======================================== #}
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
+    <!-- ========== META TAGS ========== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYP Cinema - 香港首選電影院線</title>
+    
+    <!-- ========== EXTERNAL STYLESHEETS ========== -->
     <link rel="stylesheet" href="{{ url_for('static', filename='cinema.css') }}">
+    
+    <!-- ========== PAGE STYLES ========== -->
     <style>
+        /* ========== GLOBAL RESET ========== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        /* ========== BODY STYLES ========== */
         body {
             font-family: 'Microsoft YaHei', 'Arial', sans-serif;
             background-color: #0a0a0a;
@@ -19,6 +36,7 @@
             line-height: 1.6;
         }
 
+        /* ========== HEADER STYLES ========== */
         header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 2rem;
@@ -37,6 +55,7 @@
             opacity: 0.9;
         }
 
+        /* ========== NAVIGATION BAR ========== */
         nav {
             background-color: #1a1a1a;
             padding: 1rem;
@@ -72,6 +91,7 @@
             background-clip: text;
         }
 
+        /* ========== MOVIE GRID LAYOUT ========== */
         .movie-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -79,6 +99,7 @@
             margin-bottom: 3rem;
         }
 
+        /* ========== MOVIE CARD STYLES ========== */
         .movie-card {
             background-color: #1a1a1a;
             border-radius: 15px;
@@ -166,6 +187,7 @@
             color: #888;
         }
 
+        /* ========== RESPONSIVE DESIGN - MOBILE ========== */
         @media (max-width: 768px) {
             .movie-grid {
                 grid-template-columns: 1fr;
@@ -183,20 +205,38 @@
     </style>
 </head>
 <body>
+    <!-- ========================================
+         HEADER SECTION
+    ======================================== -->
     <header>
         <h1>🎬 FYP Cinema</h1>
         <p>香港首選電影院線 - 極致觀影體驗</p>
     </header>
 
+    <!-- ========================================
+         NAVIGATION BAR
+    ======================================== -->
     <nav>
-        <a href="{{ url_for('cinema_index') }}">首頁</a>
-        <a href="{{ url_for('cinema_coming_soon') }}">即將上映</a>
-        <a href="{{ url_for('index') }}">返回主站</a>
+        <a href="{{ url_for('cinema_index') }}" class="active">🎬 現正熱映</a>
+        <a href="{{ url_for('cinema_coming_soon') }}">📅 即將上映</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}">👤 個人中心</a>
+        <a href="{{ url_for('logout') }}">🚪 登出</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">🔑 登入</a>
+        <a href="{{ url_for('register') }}">✨ 註冊</a>
+        {% endif %}
     </nav>
     
+    <!-- ========================================
+         MAIN CONTENT - Movie Grid
+    ======================================== -->
     <main>
         <h2>🔥 現正熱映</h2>
+        
+        <!-- Movie Grid Container -->
         <div class="movie-grid">
+            {# Loop through all movies from database #}
             {% for movie in movies %}
             <div class="movie-card">
                 <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450?text=MCL+Cinema'">
@@ -215,6 +255,9 @@
         </div>
     </main>
     
+    <!-- ========================================
+         FOOTER SECTION
+    ======================================== -->
     <footer>
         <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
         <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
