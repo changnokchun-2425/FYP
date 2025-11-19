@@ -102,6 +102,67 @@ COUPON_TYPES = {
         'valid_days': 30,
         'description': '免費電影票一張',
         'icon': '🎟️'
+    },
+    # Points-based coupons (can be purchased with points)
+    'POINTS_10OFF': {
+        'name': '10%折扣券',
+        'name_en': '10% Off Coupon',
+        'discount_type': 'percentage',
+        'discount_value': 10,
+        'min_purchase': 100,
+        'max_discount': 30,
+        'valid_days': 30,
+        'description': '消費滿HK$100享10%折扣',
+        'icon': '🎫',
+        'points_cost': 500  # Cost in points
+    },
+    'POINTS_20OFF': {
+        'name': '20%折扣券',
+        'name_en': '20% Off Coupon',
+        'discount_type': 'percentage',
+        'discount_value': 20,
+        'min_purchase': 200,
+        'max_discount': 60,
+        'valid_days': 30,
+        'description': '消費滿HK$200享20%折扣',
+        'icon': '🎫',
+        'points_cost': 1000
+    },
+    'POINTS_FIXED30': {
+        'name': 'HK$30優惠券',
+        'name_en': 'HK$30 Off Coupon',
+        'discount_type': 'fixed',
+        'discount_value': 30,
+        'min_purchase': 150,
+        'max_discount': 30,
+        'valid_days': 30,
+        'description': '滿HK$150減HK$30',
+        'icon': '💵',
+        'points_cost': 600
+    },
+    'POINTS_FIXED50': {
+        'name': 'HK$50優惠券',
+        'name_en': 'HK$50 Off Coupon',
+        'discount_type': 'fixed',
+        'discount_value': 50,
+        'min_purchase': 250,
+        'max_discount': 50,
+        'valid_days': 30,
+        'description': '滿HK$250減HK$50',
+        'icon': '💵',
+        'points_cost': 1000
+    },
+    'POINTS_FREETICKET': {
+        'name': '免費電影票',
+        'name_en': 'Free Movie Ticket',
+        'discount_type': 'fixed',
+        'discount_value': 100,
+        'min_purchase': 0,
+        'max_discount': 100,
+        'valid_days': 30,
+        'description': '免費電影票一張',
+        'icon': '🎟️',
+        'points_cost': 2000
     }
 }
 
@@ -414,6 +475,9 @@ def get_coupon_info(coupon):
     """
     template = COUPON_TYPES.get(coupon.coupon_type, {})
     
+    # Calculate days remaining
+    days_remaining = (coupon.expiry_date - datetime.now()).days
+    
     return {
         'id': coupon.id,
         'code': coupon.code,
@@ -422,13 +486,88 @@ def get_coupon_info(coupon):
         'description': template.get('description', ''),
         'icon': template.get('icon', '🎫'),
         'expiry_date': coupon.expiry_date,
+        'is_valid': coupon.is_valid,
         'is_used': coupon.is_used,
-        'used_date': coupon.used_date,
-        'days_remaining': (coupon.expiry_date - datetime.now()).days if not coupon.is_used else 0,
-        'discount_type': template.get('discount_type', 'fixed'),
-        'discount_value': template.get('discount_value', 0),
-        'min_purchase': template.get('min_purchase', 0)
+        'min_purchase': template.get('min_purchase', 0),
+        'days_remaining': days_remaining
     }
+
+
+# ==========================================================
+# SECTION 7: POINTS EXCHANGE SYSTEM
+# Purpose: Exchange points for coupons
+# ==========================================================
+
+def get_points_coupons():
+    """
+    Get list of coupons available for points exchange
+    
+    Returns:
+        list: List of coupon type configurations with points cost
+    """
+    return {k: v for k, v in COUPON_TYPES.items() if 'points_cost' in v}
+
+
+def exchange_points_for_coupon(user, coupon_type):
+    """
+    Exchange user points for a coupon
+    
+    Args:
+        user (User): User object
+        coupon_type (str): Type of coupon to exchange
+    
+    Returns:
+        dict: {'success': bool, 'message': str, 'coupon': Coupon or None}
+    """
+    from app import db
+    
+    # Check if coupon type exists and is exchangeable
+    if coupon_type not in COUPON_TYPES:
+        return {
+            'success': False,
+            'message': '優惠券類型不存在',
+            'coupon': None
+        }
+    
+    coupon_template = COUPON_TYPES[coupon_type]
+    
+    if 'points_cost' not in coupon_template:
+        return {
+            'success': False,
+            'message': '此優惠券不可用積分兌換',
+            'coupon': None
+        }
+    
+    points_cost = coupon_template['points_cost']
+    
+    # Check if user has enough points
+    if user.points < points_cost:
+        return {
+            'success': False,
+            'message': f'積分不足，需要 {points_cost} 積分，您目前有 {user.points} 積分',
+            'coupon': None
+        }
+    
+    # Deduct points
+    user.points -= points_cost
+    
+    # Create coupon
+    coupon = create_coupon_for_user(user.id, coupon_type)
+    
+    try:
+        db.session.commit()
+        return {
+            'success': True,
+            'message': f'成功兌換！已使用 {points_cost} 積分',
+            'coupon': coupon
+        }
+    except Exception as e:
+        db.session.rollback()
+        return {
+            'success': False,
+            'message': f'兌換失敗：{str(e)}',
+            'coupon': None
+        }
 
 
 # ==========================================================

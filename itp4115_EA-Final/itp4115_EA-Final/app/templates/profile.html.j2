@@ -283,19 +283,30 @@
             </div>
 
             <!-- Membership Status -->
-            <div class="info-card">
-                <h3>🎯 會員狀態</h3>
+            <div class="info-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border: 2px solid #e74c3c;">
+                <h3 style="color: #fff;">🎯 會員狀態</h3>
                 <div class="info-row">
-                    <span class="info-label">會籍等級</span>
-                    <span class="info-value">{{ '白金會員' if user.is_admin else '標準會員' }}</span>
+                    <span class="info-label" style="color: rgba(255,255,255,0.9);">會籍等級</span>
+                    <span class="info-value" style="color: #fff; font-weight: bold;">
+                        {% if user.is_vip %}
+                            <span style="color: #ffd700;">👑 VIP</span> - 
+                        {% endif %}
+                        {{ user.membership_level_name }} (Lv.{{ user.membership_level }})
+                    </span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">積分</span>
-                    <span class="info-value">1,250 分</span>
+                <div class="info-row" style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 10px; margin-top: 10px;">
+                    <span class="info-label" style="color: rgba(255,255,255,0.9);">積分</span>
+                    <span class="info-value" style="color: #fff; font-size: 1.5em; font-weight: bold;">{{ "{:,}".format(user.points) }} 分</span>
                 </div>
+                {% if user.membership_level < 6 %}
                 <div class="info-row">
-                    <span class="info-label">優惠券</span>
-                    <span class="info-value">3 張可用</span>
+                    <span class="info-label" style="color: rgba(255,255,255,0.9);">升級還需</span>
+                    <span class="info-value" style="color: #ffd700; font-weight: bold;">{{ "{:,}".format(user.points_to_next_level) }} 分</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label" style="color: rgba(255,255,255,0.9);">優惠券</span>
+                    <span class="info-value" style="color: #fff; font-weight: bold;">{{ coupon_count }} 張可用</span>
                 </div>
             </div>
 
@@ -330,8 +341,13 @@
                 <a href="{{ url_for('my_coupons') }}" class="action-btn">
                     💳 我的優惠券
                 </a>
-                <a href="{{ url_for('edit_profile') }}" class="action-btn">
-                    ⚙️ 修改個人資料
+                <a href="{{ url_for('exchange_points') }}" class="action-btn" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                    🌟 積分兌換
+                </a>
+                <a href="{{ url_for('vip_membership') }}" class="action-btn" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #000;">
+                    👑 VIP會籍
+                </a>
+                <a href="{{ url_for('edit_profile') }}" class="action-btn">\n                    ⚙️ 修改個人資料
                 </a>
                 {% if user.is_admin %}
                 <a href="{{ url_for('index') }}" class="action-btn">

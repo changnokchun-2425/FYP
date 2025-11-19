@@ -13,7 +13,9 @@ from app.data.coupon_system import (
     use_coupon,
     get_coupon_by_code,
     get_coupon_info,
-    COUPON_TYPES
+    COUPON_TYPES,
+    get_points_coupons,
+    exchange_points_for_coupon
 )
 admin_cli = AppGroup('admin')
 
@@ -118,7 +120,17 @@ def sales():
 @login_required
 def profile():
     user = current_user  # Get the currently logged-in user
-    return render_template("profile.html.j2", title="Profile", user=user)
+    
+    # Get available coupons count
+    available_coupons = get_user_coupons(user.id, include_used=False)
+    coupon_count = len(available_coupons)
+    
+    # Initialize points if None
+    if user.points is None:
+        user.points = 0
+        db.session.commit()
+    
+    return render_template("profile.html.j2", title="Profile", user=user, coupon_count=coupon_count)
 
 ####################################################################################################
 
@@ -578,7 +590,28 @@ def cinema_buy_ticket():
         if coupon_used:
             use_coupon(coupon_used, current_user.id, ticket.id)
         
-        flash('✅ 購票成功！', 'success')
+        # Initialize points if None (for existing users)
+        if current_user.points is None:
+            current_user.points = 0
+        
+        # Award points: 1 dollar = 5 points
+        # VIP members get +50% bonus points
+        base_points = int(base_price * 5)
+        if current_user.is_vip:
+            points_earned = int(base_points * 1.5)  # 50% bonus
+            vip_bonus = points_earned - base_points
+        else:
+            points_earned = base_points
+            vip_bonus = 0
+        
+        current_user.points += points_earned
+        db.session.commit()
+        
+        # Flash message with VIP bonus info
+        if vip_bonus > 0:
+            flash(f'✅ 購票成功！獲得 {points_earned} 積分 (含VIP獎勵 +{vip_bonus})', 'success')
+        else:
+            flash(f'✅ 購票成功！獲得 {points_earned} 積分', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'❌ 購票失敗：{str(e)}', 'error')
@@ -596,7 +629,9 @@ def cinema_buy_ticket():
         'original_price': original_price,
         'discount_amount': discount_amount,
         'total_price': base_price,
-        'coupon_code': coupon_code if coupon_used else None
+        'coupon_code': coupon_code if coupon_used else None,
+        'points_earned': points_earned,
+        'total_points': current_user.points
     }
     
     return render_template('cinema_success.html.j2', ticket=ticket_info)
@@ -696,6 +731,149 @@ def my_coupons():
         })
     
     return render_template('my_coupons.html.j2', coupons=coupons)
+
+# 積分兌換優惠券頁面
+@app.route('/exchange_points')
+@login_required
+def exchange_points():
+    # Initialize points if None (for existing users)
+    if current_user.points is None:
+        current_user.points = 0
+        db.session.commit()
+    
+    # Get available coupons for points exchange
+    points_coupons = get_points_coupons()
+    
+    # Format for template
+    exchange_options = []
+    for coupon_type, template in points_coupons.items():
+        if template.get('discount_type') == 'percentage':
+            discount_display = f"{template.get('discount_value')}% OFF"
+        else:
+            discount_display = f"HK${template.get('discount_value')}"
+        
+        exchange_options.append({
+            'type': coupon_type,
+            'name': template['name'],
+            'description': template['description'],
+            'icon': template['icon'],
+            'discount': discount_display,
+            'points_cost': template['points_cost'],
+            'min_purchase': template.get('min_purchase', 0),
+            'can_afford': current_user.points >= template['points_cost']
+        })
+    
+    # Sort by points cost
+    exchange_options.sort(key=lambda x: x['points_cost'])
+    
+    return render_template('exchange_points.html.j2', 
+                         exchange_options=exchange_options,
+                         user_points=current_user.points)
+
+# 處理積分兌換
+@app.route('/exchange_points/<coupon_type>', methods=['POST'])
+@login_required
+def do_exchange_points(coupon_type):
+    result = exchange_points_for_coupon(current_user, coupon_type)
+    
+    if result['success']:
+        flash(result['message'], 'success')
+    else:
+        flash(result['message'], 'error')
+    
+    return redirect(url_for('exchange_points'))
+
+# VIP會籍頁面
+@app.route('/vip_membership')
+@login_required
+def vip_membership():
+    # Initialize points if None
+    if current_user.points is None:
+        current_user.points = 0
+        db.session.commit()
+    
+    # Check current VIP status
+    vip_status = {
+        'is_vip': current_user.is_vip,
+        'vip_type': current_user.vip_type,
+        'vip_expiry': current_user.vip_expiry.strftime('%Y-%m-%d') if current_user.vip_expiry else None
+    }
+    
+    return render_template('vip_membership.html.j2', 
+                         vip_status=vip_status,
+                         user_points=current_user.points,
+                         membership_level=current_user.membership_level,
+                         membership_level_name=current_user.membership_level_name)
+
+# 購買VIP會籍
+@app.route('/purchase_vip/<vip_type>', methods=['POST'])
+@login_required
+def purchase_vip(vip_type):
+    from datetime import datetime, timedelta
+    
+    if vip_type not in ['monthly', 'yearly']:
+        flash('❌ 無效的VIP類型', 'error')
+        return redirect(url_for('vip_membership'))
+    
+    # Check if user already has the same VIP type
+    if current_user.is_vip and current_user.vip_type == vip_type:
+        flash('❌ 您已經擁有此類型的VIP會籍，無需重複購買', 'error')
+        return redirect(url_for('vip_membership'))
+    
+    # Get auto-renew preference from form
+    auto_renew = request.form.get('auto_renew') == 'on'
+    
+    # Set price
+    price = 188 if vip_type == 'monthly' else 888
+    
+    # Calculate expiry date
+    if current_user.vip_expiry and current_user.vip_expiry > datetime.utcnow():
+        # Extend existing VIP
+        base_date = current_user.vip_expiry
+    else:
+        # New VIP or expired
+        base_date = datetime.utcnow()
+    
+    if vip_type == 'monthly':
+        new_expiry = base_date + timedelta(days=30)
+    else:  # yearly
+        new_expiry = base_date + timedelta(days=365)
+    
+    # Update user VIP status
+    current_user.vip_type = vip_type
+    current_user.vip_expiry = new_expiry
+    current_user.auto_renew_vip = auto_renew
+    
+    try:
+        db.session.commit()
+        # Redirect to VIP confirmation page
+        return redirect(url_for('vip_purchase_success', vip_type=vip_type, price=price))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ 購買失敗：{str(e)}', 'error')
+        return redirect(url_for('vip_membership'))
+
+# VIP購買成功頁面
+@app.route('/vip_purchase_success')
+@login_required
+def vip_purchase_success():
+    vip_type = request.args.get('vip_type')
+    price = request.args.get('price')
+    
+    if not vip_type or not current_user.is_vip:
+        flash('❌ 無效的訪問', 'error')
+        return redirect(url_for('vip_membership'))
+    
+    vip_info = {
+        'vip_type': vip_type,
+        'vip_type_name': '月費會員' if vip_type == 'monthly' else '年費會員',
+        'price': price,
+        'expiry_date': current_user.vip_expiry,
+        'auto_renew': current_user.auto_renew_vip,
+        'points_bonus': '50%'
+    }
+    
+    return render_template('vip_success.html.j2', vip_info=vip_info)
 
 # 修改個人資料頁面
 @app.route('/edit_profile', methods=['GET', 'POST'])

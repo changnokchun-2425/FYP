@@ -14,6 +14,10 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)  # Ensure this line exists
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
+    points = db.Column(db.Integer, default=0)  # Member points for rewards
+    vip_type = db.Column(db.String(20), nullable=True)  # 'monthly', 'yearly', or None
+    vip_expiry = db.Column(db.DateTime, nullable=True)  # VIP expiration date
+    auto_renew_vip = db.Column(db.Boolean, default=False)  # Auto-renew VIP membership
 
     def __repr__(self) -> str:
         return f'<User {self.username}>'
@@ -23,6 +27,41 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    @property
+    def is_vip(self):
+        """Check if user has active VIP membership"""
+        if self.vip_expiry and self.vip_expiry > datetime.utcnow():
+            return True
+        return False
+    
+    @property
+    def membership_level(self):
+        """Calculate membership level based on points (5000 points per level)"""
+        if self.points is None:
+            return 1
+        return min((self.points // 5000) + 1, 6)  # Max level 6
+    
+    @property
+    def membership_level_name(self):
+        """Get membership level name"""
+        levels = {
+            1: '銅牌會員',
+            2: '銀牌會員',
+            3: '金牌會員',
+            4: '鉑金會員',
+            5: '鑽石會員',
+            6: '皇冠會員'
+        }
+        return levels.get(self.membership_level, '銅牌會員')
+    
+    @property
+    def points_to_next_level(self):
+        """Calculate points needed for next level"""
+        if self.membership_level >= 6:
+            return 0  # Max level reached
+        next_level_points = self.membership_level * 5000
+        return next_level_points - (self.points or 0)
 
 
 @login.user_loader
@@ -216,3 +255,334 @@ class Coupon(db.Model):
     def is_valid(self):
         """Check if coupon is still valid (not used and not expired)."""
         return not self.is_used and not self.is_expired
+
+
+class Movie(db.Model):
+    """Represents a movie in the cinema system."""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128), nullable=False)
+    title_en = db.Column(db.String(128))
+    description = db.Column(db.Text)
+    genre = db.Column(db.String(64))
+    duration = db.Column(db.Integer)  # in minutes
+    release_date = db.Column(db.Date)
+    rating = db.Column(db.String(10))  # e.g., 'PG', 'R', '18+'
+    director = db.Column(db.String(128))
+    cast = db.Column(db.Text)  # JSON or comma-separated
+    poster_url = db.Column(db.String(256))
+    trailer_url = db.Column(db.String(256))
+    language = db.Column(db.String(32))
+    subtitle = db.Column(db.String(32))
+    status = db.Column(db.String(20), default='coming_soon')  # now_showing, coming_soon, ended
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Movie {self.title}>'
+
+
+class Cinema(db.Model):
+    """Represents a cinema location."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    location = db.Column(db.String(256), nullable=False)
+    district = db.Column(db.String(64))
+    address = db.Column(db.String(256))
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+    facilities = db.Column(db.Text)  # JSON: parking, 3D, IMAX, etc.
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Cinema {self.name}>'
+
+
+class Hall(db.Model):
+    """Represents a screening hall in a cinema."""
+    id = db.Column(db.Integer, primary_key=True)
+    cinema_id = db.Column(db.Integer, db.ForeignKey('cinema.id'), nullable=False)
+    name = db.Column(db.String(64), nullable=False)  # e.g., 'Hall 1', 'IMAX Hall'
+    hall_type = db.Column(db.String(32))  # standard, IMAX, 3D, 4DX
+    total_seats = db.Column(db.Integer, nullable=False)
+    rows = db.Column(db.Integer, nullable=False)
+    columns = db.Column(db.Integer, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    cinema = db.relationship('Cinema', backref='halls')
+    
+    def __repr__(self):
+        return f'<Hall {self.name} at {self.cinema_id}>'
+
+
+class Showtime(db.Model):
+    """Represents a movie showtime."""
+    id = db.Column(db.Integer, primary_key=True)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=False)
+    hall_id = db.Column(db.Integer, db.ForeignKey('hall.id'), nullable=False)
+    show_date = db.Column(db.Date, nullable=False)
+    show_time = db.Column(db.Time, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    available_seats = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='available')  # available, sold_out, cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    movie = db.relationship('Movie', backref='showtimes')
+    hall = db.relationship('Hall', backref='showtimes')
+    
+    def __repr__(self):
+        return f'<Showtime {self.movie_id} on {self.show_date} {self.show_time}>'
+
+
+class Seat(db.Model):
+    """Represents individual seats in a hall."""
+    id = db.Column(db.Integer, primary_key=True)
+    hall_id = db.Column(db.Integer, db.ForeignKey('hall.id'), nullable=False)
+    row = db.Column(db.String(2), nullable=False)  # A, B, C, etc.
+    number = db.Column(db.Integer, nullable=False)  # 1, 2, 3, etc.
+    seat_type = db.Column(db.String(20), default='standard')  # standard, vip, wheelchair
+    is_available = db.Column(db.Boolean, default=True)
+    
+    hall = db.relationship('Hall', backref='seats')
+    
+    def __repr__(self):
+        return f'<Seat {self.row}{self.number} in Hall {self.hall_id}>'
+
+
+class Booking(db.Model):
+    """Represents a detailed booking (can have multiple seats)."""
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    showtime_id = db.Column(db.Integer, db.ForeignKey('showtime.id'), nullable=False)
+    seat_id = db.Column(db.Integer, db.ForeignKey('seat.id'), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    booking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    ticket = db.relationship('Ticket', backref='bookings')
+    showtime = db.relationship('Showtime', backref='bookings')
+    seat = db.relationship('Seat', backref='bookings')
+    
+    def __repr__(self):
+        return f'<Booking {self.id}>'
+
+
+class Payment(db.Model):
+    """Represents payment transactions."""
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    payment_method = db.Column(db.String(32))  # credit_card, cash, mobile_pay
+    payment_status = db.Column(db.String(20), default='pending')  # pending, completed, failed, refunded
+    transaction_id = db.Column(db.String(128), unique=True)
+    payment_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    ticket = db.relationship('Ticket', backref='payments')
+    user = db.relationship('User', backref='payments')
+    
+    def __repr__(self):
+        return f'<Payment {self.id} - {self.payment_status}>'
+
+
+class Review(db.Model):
+    """Represents user reviews for movies."""
+    id = db.Column(db.Integer, primary_key=True)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
+    title = db.Column(db.String(128))
+    content = db.Column(db.Text)
+    is_verified_purchase = db.Column(db.Boolean, default=False)
+    helpful_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    
+    movie = db.relationship('Movie', backref='reviews')
+    user = db.relationship('User', backref='reviews')
+    
+    def __repr__(self):
+        return f'<Review {self.id} for Movie {self.movie_id}>'
+
+
+class Wishlist(db.Model):
+    """Represents user's movie wishlist."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=False)
+    added_date = db.Column(db.DateTime, default=datetime.utcnow)
+    notify_on_release = db.Column(db.Boolean, default=True)
+    
+    user = db.relationship('User', backref='wishlist_items')
+    movie = db.relationship('Movie', backref='wishlist_items')
+    
+    def __repr__(self):
+        return f'<Wishlist User {self.user_id} - Movie {self.movie_id}>'
+
+
+class Notification(db.Model):
+    """Represents notifications sent to users."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(128), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    notification_type = db.Column(db.String(32))  # booking, promotion, movie_release, vip
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='notifications')
+    
+    def __repr__(self):
+        return f'<Notification {self.id} - {self.title}>'
+
+
+class Promotion(db.Model):
+    """Represents promotional campaigns."""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text)
+    discount_type = db.Column(db.String(20))  # percentage, fixed, bogo
+    discount_value = db.Column(db.Float)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    terms_conditions = db.Column(db.Text)
+    banner_image = db.Column(db.String(256))
+    
+    def __repr__(self):
+        return f'<Promotion {self.title}>'
+
+
+class ConcessionItem(db.Model):
+    """Represents food and beverage items."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(32))  # snack, drink, combo, meal
+    price = db.Column(db.Float, nullable=False)
+    image_url = db.Column(db.String(256))
+    is_available = db.Column(db.Boolean, default=True)
+    calories = db.Column(db.Integer)
+    allergen_info = db.Column(db.String(256))
+    
+    def __repr__(self):
+        return f'<ConcessionItem {self.name}>'
+
+
+class ConcessionOrder(db.Model):
+    """Represents concession orders."""
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    total_amount = db.Column(db.Float, nullable=False)
+    order_status = db.Column(db.String(20), default='pending')  # pending, preparing, ready, completed
+    order_date = db.Column(db.DateTime, default=datetime.utcnow)
+    pickup_time = db.Column(db.DateTime)
+    
+    ticket = db.relationship('Ticket', backref='concession_orders')
+    user = db.relationship('User', backref='concession_orders')
+    
+    def __repr__(self):
+        return f'<ConcessionOrder {self.id}>'
+
+
+class ConcessionOrderItem(db.Model):
+    """Represents items in a concession order."""
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('concession_order.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('concession_item.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    
+    order = db.relationship('ConcessionOrder', backref='items')
+    item = db.relationship('ConcessionItem', backref='order_items')
+    
+    def __repr__(self):
+        return f'<ConcessionOrderItem {self.id}>'
+
+
+class MembershipTier(db.Model):
+    """Represents membership tier definitions."""
+    id = db.Column(db.Integer, primary_key=True)
+    level = db.Column(db.Integer, unique=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    points_required = db.Column(db.Integer, nullable=False)
+    discount_percentage = db.Column(db.Float, default=0)
+    priority_booking = db.Column(db.Boolean, default=False)
+    free_popcorn_monthly = db.Column(db.Integer, default=0)
+    benefits = db.Column(db.Text)  # JSON
+    
+    def __repr__(self):
+        return f'<MembershipTier {self.name}>'
+
+
+class PointsTransaction(db.Model):
+    """Represents points transaction history."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    points_change = db.Column(db.Integer, nullable=False)  # positive for earn, negative for spend
+    transaction_type = db.Column(db.String(32))  # ticket_purchase, coupon_exchange, bonus, refund
+    reference_id = db.Column(db.Integer)  # ticket_id or coupon_id
+    description = db.Column(db.String(256))
+    balance_after = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='points_transactions')
+    
+    def __repr__(self):
+        return f'<PointsTransaction {self.id} - {self.points_change}>'
+
+
+class GiftCard(db.Model):
+    """Represents gift cards."""
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    balance = db.Column(db.Float, nullable=False)
+    original_amount = db.Column(db.Float, nullable=False)
+    purchaser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    recipient_email = db.Column(db.String(120))
+    is_active = db.Column(db.Boolean, default=True)
+    expiry_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    purchaser = db.relationship('User', backref='gift_cards')
+    
+    def __repr__(self):
+        return f'<GiftCard {self.code}>'
+
+
+class RefundRequest(db.Model):
+    """Represents refund requests."""
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    refund_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected, processed
+    admin_notes = db.Column(db.Text)
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    processed_at = db.Column(db.DateTime)
+    processed_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    ticket = db.relationship('Ticket', backref='refund_requests', foreign_keys=[ticket_id])
+    user = db.relationship('User', backref='refund_requests', foreign_keys=[user_id])
+    processor = db.relationship('User', foreign_keys=[processed_by])
+    
+    def __repr__(self):
+        return f'<RefundRequest {self.id} - {self.status}>'
+
+
+class SystemLog(db.Model):
+    """Represents system activity logs."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    action = db.Column(db.String(64), nullable=False)
+    resource_type = db.Column(db.String(32))  # user, ticket, payment, etc.
+    resource_id = db.Column(db.Integer)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(256))
+    details = db.Column(db.Text)  # JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='system_logs')
+    
+    def __repr__(self):
+        return f'<SystemLog {self.id} - {self.action}>'

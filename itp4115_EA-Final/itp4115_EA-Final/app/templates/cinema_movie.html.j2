@@ -44,6 +44,52 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
+        /* ========== FLASH MESSAGES ========== */
+        .flash-messages {
+            max-width: 1200px;
+            margin: 1rem auto;
+            padding: 0 2rem;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: #fff;
+            border-left: 5px solid #1e8449;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border-left: 5px solid #a93226;
+        }
+
+        .alert.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         main {
             max-width: 1200px;
             margin: 3rem auto;
@@ -314,6 +360,19 @@
         <a href="{{ url_for('register') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">✨ 註冊</a>
         {% endif %}
     </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     
     <main>
         <div class="movie-detail">
@@ -594,6 +653,21 @@
                     couponInput.value = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
                 }
             }
+        });
+    </script>
+
+    <!-- Auto-hide flash messages after 5 seconds -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    alert.classList.add('fade-out');
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 300); // Wait for fade animation
+                }, 5000); // 5 seconds
+            });
         });
     </script>
 </body>

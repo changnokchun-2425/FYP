@@ -335,7 +335,10 @@
     <div class="container">
         <div class="header">
             <h1>💳 我的優惠券</h1>
-            <a href="{{ url_for('profile') }}" class="back-btn">← 返回個人中心</a>
+            <div>
+                <a href="{{ url_for('exchange_points') }}" class="back-btn" style="margin-right: 10px;">🌟 積分兌換</a>
+                <a href="{{ url_for('profile') }}" class="back-btn">← 返回個人中心</a>
+            </div>
         </div>
 
         <div class="stats-banner">

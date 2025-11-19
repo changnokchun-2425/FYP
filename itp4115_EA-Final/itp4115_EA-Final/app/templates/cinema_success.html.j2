@@ -243,7 +243,29 @@
                 <p><strong>🕐 場次：</strong>{{ ticket.showtime }}</p>
                 <p><strong>💺 座位數量：</strong>{{ ticket.seats }} 張</p>
                 <p><strong>📧 電郵：</strong>{{ ticket.email }}</p>
+                {% if ticket.discount_amount > 0 %}
+                <p><strong>💵 原價：</strong><span style="text-decoration: line-through; color: #888;">HK${{ ticket.original_price }}</span></p>
+                <p><strong>🎫 優惠：</strong><span style="color: #4CAF50;">-HK${{ ticket.discount_amount }}</span></p>
+                {% endif %}
                 <p><strong>💰 總金額：</strong>HK${{ ticket.total_price }}</p>
+            </div>
+
+            <!-- ========== POINTS EARNED ========== -->
+            <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); padding: 1.5rem; border-radius: 15px; margin: 2rem 0; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">
+                <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.5rem;">🌟 獲得積分</h3>
+                <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="text-align: center;">
+                        <p style="font-size: 1rem; color: #fff; opacity: 0.9; margin-bottom: 0.5rem;">本次獲得</p>
+                        <p style="font-size: 2.5rem; font-weight: bold; color: #fff; margin: 0;">+{{ ticket.points_earned }}</p>
+                    </div>
+                    <div style="font-size: 2rem; color: #fff; opacity: 0.6;">→</div>
+                    <div style="text-align: center;">
+                        <p style="font-size: 1rem; color: #fff; opacity: 0.9; margin-bottom: 0.5rem;">總積分</p>
+                        <p style="font-size: 2.5rem; font-weight: bold; color: #fff; margin: 0;">{{ ticket.total_points }}</p>
+                    </div>
+                </div>
+                <p style="color: #fff; opacity: 0.9; margin-top: 1rem; text-align: center;">購買電影票賺取積分（HK$1 = 5 積分）</p>
+                <p style="color: #fff; opacity: 0.9; font-size: 0.95rem; margin-top: 1rem; text-align: center;">💡 積分可用於兌換優惠券，前往 <a href="{{ url_for('exchange_points') }}" style="color: #fff; font-weight: bold; text-decoration: underline;">積分兌換</a> 查看更多</p>
             </div>
 
             <div style="text-align: center; margin: 2rem 0;">

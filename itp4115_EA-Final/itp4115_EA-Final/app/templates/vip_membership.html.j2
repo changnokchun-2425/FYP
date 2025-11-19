@@ -1,0 +1,524 @@
+{# ========================================
+   VIP MEMBERSHIP PAGE
+   ========================================
+   Purpose: VIP membership purchase and management
+   Features:
+   - Display current VIP status
+   - Purchase monthly/yearly VIP
+   - Show VIP benefits
+   - Membership level display
+======================================== #}
+
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP會籍 - FYP Cinema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        header {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            color: #000;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #ffd700;
+            color: #000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            margin-bottom: 2rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Current Status Banner */
+        .status-banner {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 2px solid #ffd700;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .status-banner h2 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .status-item {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .status-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-value {
+            color: #ffd700;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Membership Levels */
+        .levels-section {
+            margin: 3rem 0;
+        }
+
+        .levels-section h2 {
+            color: #ffd700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .level-card {
+            background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #444;
+            transition: all 0.3s;
+        }
+
+        .level-card.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        .level-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-name {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-points {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        /* VIP Plans */
+        .vip-plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .vip-card {
+            background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+            border: 2px solid #ffd700;
+        }
+
+        .vip-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .vip-card.recommended {
+            border-color: #ff6b6b;
+            background: linear-gradient(145deg, #3a2a2a 0%, #2a1a1a 100%);
+        }
+
+        .recommended-badge {
+            background: #ff6b6b;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .vip-header h3 {
+            color: #ffd700;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .vip-price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 1rem 0;
+        }
+
+        .vip-price span {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        .vip-benefits {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .vip-benefits li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #333;
+            color: #ddd;
+        }
+
+        .vip-benefits li:before {
+            content: "✓ ";
+            color: #ffd700;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .purchase-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #000;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .purchase-btn:hover {
+            background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .purchase-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>👑 VIP會籍中心</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('cinema_index') }}">🎬 首頁</a>
+        <a href="{{ url_for('profile') }}">👤 會員中心</a>
+        <a href="{{ url_for('exchange_points') }}">🌟 積分兌換</a>
+        <a href="{{ url_for('my_coupons') }}">🎫 我的優惠券</a>
+        <a href="{{ url_for('logout') }}">🚪 登出</a>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container">
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <!-- Current Status -->
+        <div class="status-banner">
+            <h2>📊 您的會員狀態</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">會員等級</div>
+                    <div class="status-value">Lv.{{ membership_level }}</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">等級名稱</div>
+                    <div class="status-value">{{ membership_level_name }}</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">當前積分</div>
+                    <div class="status-value">{{ "{:,}".format(user_points) }}</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">VIP狀態</div>
+                    <div class="status-value">
+                        {% if vip_status.is_vip %}
+                            ✓ 已啟用
+                        {% else %}
+                            未啟用
+                        {% endif %}
+                    </div>
+                </div>
+                {% if vip_status.is_vip %}
+                <div class="status-item">
+                    <div class="status-label">VIP到期日</div>
+                    <div class="status-value" style="font-size: 1rem;">{{ vip_status.vip_expiry }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Membership Levels -->
+        <div class="levels-section">
+            <h2>🏆 會員等級系統</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 2rem;">每5,000積分提升一級，最高6級</p>
+            <div class="levels-grid">
+                <div class="level-card {% if membership_level == 1 %}active{% endif %}">
+                    <div class="level-number">1</div>
+                    <div class="level-name">銅牌會員</div>
+                    <div class="level-points">0 - 4,999分</div>
+                </div>
+                <div class="level-card {% if membership_level == 2 %}active{% endif %}">
+                    <div class="level-number">2</div>
+                    <div class="level-name">銀牌會員</div>
+                    <div class="level-points">5,000 - 9,999分</div>
+                </div>
+                <div class="level-card {% if membership_level == 3 %}active{% endif %}">
+                    <div class="level-number">3</div>
+                    <div class="level-name">金牌會員</div>
+                    <div class="level-points">10,000 - 14,999分</div>
+                </div>
+                <div class="level-card {% if membership_level == 4 %}active{% endif %}">
+                    <div class="level-number">4</div>
+                    <div class="level-name">鉑金會員</div>
+                    <div class="level-points">15,000 - 19,999分</div>
+                </div>
+                <div class="level-card {% if membership_level == 5 %}active{% endif %}">
+                    <div class="level-number">5</div>
+                    <div class="level-name">鑽石會員</div>
+                    <div class="level-points">20,000 - 24,999分</div>
+                </div>
+                <div class="level-card {% if membership_level == 6 %}active{% endif %}">
+                    <div class="level-number">6</div>
+                    <div class="level-name">皇冠會員</div>
+                    <div class="level-points">25,000分以上</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIP Plans -->
+        <h2 style="color: #ffd700; margin: 3rem 0 1.5rem; text-align: center;">✨ VIP會籍方案</h2>
+        <div class="vip-plans">
+            <!-- Monthly VIP -->
+            <div class="vip-card">
+                <div class="vip-header">
+                    <h3>📅 月費VIP</h3>
+                </div>
+                <div class="vip-price">
+                    HK$188
+                    <span>/月</span>
+                </div>
+                <ul class="vip-benefits">
+                    <li>購票積分 +50% 獎勵</li>
+                    <li>專屬VIP優惠券</li>
+                    <li>優先訂票權</li>
+                    <li>生日禮遇</li>
+                    <li>30天有效期</li>
+                </ul>
+                {% if vip_status.is_vip and vip_status.vip_type == 'monthly' %}
+                    <button type="button" class="purchase-btn" disabled style="background: #555; cursor: not-allowed;">
+                        ✓ 已購買
+                    </button>
+                    <p style="color: #ffd700; text-align: center; margin-top: 1rem; font-size: 0.9rem;">
+                        到期日：{{ vip_status.vip_expiry }}
+                    </p>
+                {% else %}
+                    <form method="POST" action="{{ url_for('purchase_vip', vip_type='monthly') }}" onsubmit="return confirmPurchase('monthly', '月費', 188);">
+                        <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #ddd;">
+                                <input type="checkbox" name="auto_renew" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                                <span style="font-size: 0.95rem;">🔄 到期時自動續費 (HK$188/月)</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="purchase-btn">
+                            立即購買
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+
+            <!-- Yearly VIP -->
+            <div class="vip-card recommended">
+                <span class="recommended-badge">🔥 最超值</span>
+                <div class="vip-header">
+                    <h3>🎊 年費VIP</h3>
+                </div>
+                <div class="vip-price">
+                    HK$888
+                    <span>/年</span>
+                </div>
+                <p style="color: #4CAF50; margin-bottom: 1rem; font-weight: bold;">
+                    💰 節省 HK$1,368！
+                </p>
+                <ul class="vip-benefits">
+                    <li>購票積分 +50% 獎勵</li>
+                    <li>專屬VIP優惠券</li>
+                    <li>優先訂票權</li>
+                    <li>生日禮遇</li>
+                    <li>免費電影票 x2</li>
+                    <li>365天有效期</li>
+                    <li>比月費便宜60%</li>
+                </ul>
+                {% if vip_status.is_vip and vip_status.vip_type == 'yearly' %}
+                    <button type="button" class="purchase-btn" disabled style="background: #555; cursor: not-allowed;">
+                        ✓ 已購買
+                    </button>
+                    <p style="color: #ffd700; text-align: center; margin-top: 1rem; font-size: 0.9rem;">
+                        到期日：{{ vip_status.vip_expiry }}
+                    </p>
+                {% else %}
+                    <form method="POST" action="{{ url_for('purchase_vip', vip_type='yearly') }}" onsubmit="return confirmPurchase('yearly', '年費', 888);">
+                        <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #ddd;">
+                                <input type="checkbox" name="auto_renew" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                                <span style="font-size: 0.95rem;">🔄 到期時自動續費 (HK$888/年)</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="purchase-btn">
+                            立即購買
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem; padding: 2rem; background-color: rgba(255, 215, 0, 0.1); border-radius: 15px;">
+            <h3 style="color: #ffd700; margin-bottom: 1rem;">💡 VIP會員特權</h3>
+            <p style="color: #ddd; line-height: 1.8;">
+                成為VIP會員，每次購票可獲得額外50%積分獎勵！<br>
+                例如：購買HK$100電影票，普通會員獲得500積分，VIP會員獲得750積分！<br>
+                累積積分更快，升級更容易，兌換優惠券更多！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Confirm purchase
+        function confirmPurchase(vipType, typeName, price) {
+            const autoRenewCheckbox = event.target.querySelector('input[name="auto_renew"]');
+            const autoRenewEnabled = autoRenewCheckbox && autoRenewCheckbox.checked;
+            
+            let message = `確認購買${typeName}VIP會籍？\n\n` +
+                         `金額：HK$${price}\n` +
+                         `您將獲得：\n` +
+                         `✓ 購票積分 +50% 獎勵\n` +
+                         `✓ 專屬VIP優惠券\n` +
+                         `✓ 優先訂票權\n`;
+            
+            if (autoRenewEnabled) {
+                const duration = vipType === 'monthly' ? '30天' : '365天';
+                message += `\n🔄 自動續費已啟用\n` +
+                          `系統將在${duration}後自動續費 HK$${price}\n`;
+            }
+            
+            message += `\n按確定繼續購買`;
+            
+            return confirm(message);
+        }
+
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-20px)';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
