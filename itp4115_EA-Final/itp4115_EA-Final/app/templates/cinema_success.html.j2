@@ -242,6 +242,9 @@
                 <p><strong>🎬 電影：</strong>{{ ticket.movie_title }}</p>
                 <p><strong>🕐 場次：</strong>{{ ticket.showtime }}</p>
                 <p><strong>💺 座位數量：</strong>{{ ticket.seats }} 張</p>
+                {% if ticket.seat_numbers %}
+                <p><strong>🪑 座位號：</strong><span style="color: #4CAF50; font-weight: bold;">{{ ticket.seat_numbers }}</span></p>
+                {% endif %}
                 <p><strong>📧 電郵：</strong>{{ ticket.email }}</p>
                 {% if ticket.discount_amount > 0 %}
                 <p><strong>💵 原價：</strong><span style="text-decoration: line-through; color: #888;">HK${{ ticket.original_price }}</span></p>

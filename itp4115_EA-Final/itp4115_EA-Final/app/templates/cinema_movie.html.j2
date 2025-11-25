@@ -91,7 +91,7 @@
         }
 
         main {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 3rem auto;
             padding: 0 2rem;
         }
@@ -105,11 +105,20 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
+        .poster-section {
+            flex-shrink: 0;
+            position: sticky;
+            top: 2rem;
+            align-self: flex-start;
+            height: fit-content;
+        }
+
         .movie-detail img {
-            width: 400px;
+            width: 350px;
             height: auto;
             border-radius: 15px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            display: block;
         }
 
         .detail-info {
@@ -150,37 +159,41 @@
 
         /* ========== BOOKING FORM STYLES ========== */
         .booking-form {
-            background-color: #2a2a2a;
-            padding: 2.5rem;
+            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+            padding: 3rem;
             border-radius: 15px;
             margin-top: 2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            border: 1px solid #333;
+            width: 100%;
         }
 
         .booking-form h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            margin-bottom: 2rem;
             color: #e50914;
+            text-align: center;
+            font-weight: bold;
         }
 
         .booking-form label {
             display: block;
-            margin-top: 1.2rem;
+            margin-top: 1.5rem;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: #fff;
         }
 
         .booking-form input,
         .booking-form select {
             width: 100%;
-            padding: 1rem;
+            padding: 1.2rem;
             margin-top: 0.5rem;
             border: 2px solid #444;
             border-radius: 8px;
             background-color: #1a1a1a;
             color: white;
-            font-size: 1rem;
+            font-size: 1.05rem;
             transition: border-color 0.3s;
         }
 
@@ -195,10 +208,10 @@
             margin-top: 2rem;
             background: linear-gradient(135deg, #e50914, #b20710);
             color: white;
-            padding: 1.2rem;
+            padding: 1.4rem;
             border: none;
             border-radius: 8px;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
@@ -213,15 +226,15 @@
 
         .price-info {
             background-color: #1a1a1a;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
             border-left: 4px solid #e50914;
         }
 
         .price-info p {
-            margin: 0.5rem 0;
-            font-size: 1rem;
+            margin: 0.8rem 0;
+            font-size: 1.1rem;
         }
 
         /* ========== COUPON SECTION STYLES ========== */
@@ -304,6 +317,195 @@
             font-weight: bold;
         }
 
+        /* ========== SEAT SELECTION STYLES ========== */
+        .seat-selection {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.3), rgba(42, 82, 152, 0.3));
+            border-radius: 15px;
+            border: 2px solid #2a5298;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .seat-selection h4 {
+            color: #4CAF50;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cinema-screen {
+            background: linear-gradient(135deg, #444, #666);
+            color: #fff;
+            text-align: center;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2.5rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+            border: 2px solid #888;
+            position: relative;
+        }
+
+        .cinema-screen::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #888, transparent);
+        }
+
+        .seat-map {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .seat-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .seat-row-label {
+            width: 30px;
+            text-align: center;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .seat {
+            width: 38px;
+            height: 38px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px 8px 2px 2px;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .seat::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .seat:hover:not(.occupied):not(.selected) {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            transform: scale(1.15) translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+            color: #fff;
+            border-color: #66BB6A;
+        }
+
+        .seat.selected {
+            background: linear-gradient(135deg, #e50914, #c40812);
+            border-color: #ff1a24;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.4);
+        }
+
+        .seat.selected::after {
+            background-color: rgba(229, 9, 20, 0.5);
+        }
+
+        .seat.occupied {
+            background: linear-gradient(135deg, #555, #444);
+            border-color: #666;
+            cursor: not-allowed;
+            opacity: 0.4;
+            color: #666;
+        }
+
+        .seat.occupied::after {
+            background-color: transparent;
+        }
+
+        .seat-legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ddd;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid;
+        }
+
+        .legend-available {
+            background-color: #2a2a2a;
+            border-color: #4CAF50;
+        }
+
+        .legend-selected {
+            background-color: #e50914;
+            border-color: #e50914;
+        }
+
+        .legend-occupied {
+            background-color: #555;
+            border-color: #777;
+            opacity: 0.5;
+        }
+
+        .selected-seats-display {
+            margin-top: 1.5rem;
+            padding: 1.2rem 1.5rem;
+            background: linear-gradient(135deg, rgba(229, 9, 20, 0.15), rgba(229, 9, 20, 0.08));
+            border-radius: 10px;
+            border: 2px solid #e50914;
+            box-shadow: 0 2px 8px rgba(229, 9, 20, 0.2);
+        }
+
+        .selected-seats-display p {
+            margin: 0.5rem 0;
+            color: #fff;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-seats-display strong {
+            color: #fff;
+            opacity: 0.9;
+        }
+
+        .selected-seats-list {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
         footer {
             background-color: #0a0a0a;
             text-align: center;
@@ -320,6 +522,10 @@
             .movie-detail {
                 flex-direction: column;
                 padding: 2rem;
+            }
+
+            .poster-section {
+                position: static;
             }
             
             .movie-detail img {
@@ -340,6 +546,30 @@
 
             .detail-info h2 {
                 font-size: 2rem;
+            }
+
+            .seat {
+                width: 32px;
+                height: 32px;
+                font-size: 0.65rem;
+            }
+
+            .seat-row-label {
+                width: 25px;
+                font-size: 0.9rem;
+            }
+
+            .seat-selection {
+                padding: 1rem;
+            }
+
+            .cinema-screen {
+                font-size: 0.95rem;
+                padding: 0.8rem 1rem;
+            }
+
+            .seat-legend {
+                gap: 1rem;
             }
         }
     </style>
@@ -376,7 +606,9 @@
     
     <main>
         <div class="movie-detail">
-            <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/400x600?text=MCL+Cinema'">
+            <div class="poster-section">
+                <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/400x600?text=MCL+Cinema'">
+            </div>
             <div class="detail-info">
                 <h2>{{ movie.title }}</h2>
                 <div class="movie-meta">
@@ -393,12 +625,49 @@
                         <input type="hidden" name="movie_id" value="{{ movie.id }}">
                         
                         <label for="showtime">選擇場次：</label>
-                        <select name="showtime" id="showtime" required>
+                        <select name="showtime" id="showtime" required onchange="loadSeats()">
                             <option value="">請選擇場次</option>
                             {% for time in movie.showtimes %}
                             <option value="{{ time }}">{{ time }}</option>
                             {% endfor %}
                         </select>
+                        
+                        <!-- ========================================
+                             SEAT SELECTION SECTION
+                        ======================================== -->
+                        <div class="seat-selection" id="seatSelection" style="display: none;">
+                            <h4>🎭 選擇座位</h4>
+                            
+                            <div class="cinema-screen">
+                                🎬 銀幕 SCREEN 🎬
+                            </div>
+                            
+                            <div class="seat-map" id="seatMap">
+                                <!-- Seats will be generated here -->
+                            </div>
+                            
+                            <div class="seat-legend">
+                                <div class="legend-item">
+                                    <div class="legend-box legend-available"></div>
+                                    <span>可選座位</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-box legend-selected"></div>
+                                    <span>已選座位</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-box legend-occupied"></div>
+                                    <span>已售出</span>
+                                </div>
+                            </div>
+                            
+                            <div class="selected-seats-display" id="selectedSeatsDisplay" style="display: none;">
+                                <p><strong>已選座位：</strong><span class="selected-seats-list" id="selectedSeatsList"></span></p>
+                                <p><strong>座位數量：</strong><span id="selectedSeatsCount">0</span> 個</p>
+                            </div>
+                            
+                            <input type="hidden" name="selected_seats" id="selected_seats" value="">
+                        </div>
                         
                         <label for="name">姓名：</label>
                         <input type="text" name="name" id="name" placeholder="請輸入您的姓名" value="{{ current_user.username }}" required>
@@ -406,8 +675,7 @@
                         <label for="email">電郵：</label>
                         <input type="email" name="email" id="email" placeholder="example@email.com" value="{{ current_user.email }}" required>
                         
-                        <label for="seats">座位數量：</label>
-                        <input type="number" name="seats" id="seats" min="1" max="10" value="1" required onchange="updatePrice()">
+                        <input type="hidden" name="seats" id="seats" value="1">
                         
                         <!-- ========================================
                              COUPON SELECTION SECTION
@@ -442,10 +710,10 @@
                         </div>
                         
                         <div class="price-info">
-                            <p><strong>票價：</strong>HK$100 / 張</p>
-                            <p id="originalPrice" style="display: none;"><strong>原價：</strong>HK$<span>100</span></p>
+                            <p><strong>票價：</strong>HK$<span id="pricePerSeat">{{ movie.price }}</span> / 張</p>
+                            <p id="originalPrice" style="display: none;"><strong>原價：</strong>HK$<span>{{ movie.price }}</span></p>
                             <p id="discountAmount" style="display: none;" class="discount-row"><strong>優惠：</strong>-HK$<span>0</span></p>
-                            <p id="totalPrice"><strong>總計：</strong>HK$<span>100</span></p>
+                            <p id="totalPrice"><strong>總計：</strong>HK$<span>{{ movie.price }}</span></p>
                         </div>
                         
                         <button type="submit">🎫 確認購票</button>
@@ -477,20 +745,140 @@
         let currentDiscount = 0;
         let currentCouponCode = '';
         
+        // Seat selection variables
+        let selectedSeats = [];
+        const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const SEATS_PER_ROW = 10;
+        const occupiedSeats = []; // Simulated occupied seats - in production, fetch from backend
+        
         /* Load user's available coupons on page load */
         document.addEventListener('DOMContentLoaded', async function() {
             await loadUserCoupons();
+            // Randomly generate some occupied seats for demo
+            for (let i = 0; i < 15; i++) {
+                const row = ROWS[Math.floor(Math.random() * ROWS.length)];
+                const num = Math.floor(Math.random() * SEATS_PER_ROW) + 1;
+                const seatId = `${row}${num}`;
+                if (!occupiedSeats.includes(seatId)) {
+                    occupiedSeats.push(seatId);
+                }
+            }
         });
+        
+        /* Load seat map when showtime is selected */
+        function loadSeats() {
+            const showtime = document.getElementById('showtime').value;
+            const seatSelection = document.getElementById('seatSelection');
+            const seatMap = document.getElementById('seatMap');
+            
+            if (!showtime) {
+                seatSelection.style.display = 'none';
+                return;
+            }
+            
+            // Clear previous selections
+            selectedSeats = [];
+            updateSelectedSeatsDisplay();
+            
+            // Show seat selection
+            seatSelection.style.display = 'block';
+            
+            // Generate seat map
+            seatMap.innerHTML = '';
+            ROWS.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+                
+                // Add row label
+                const label = document.createElement('div');
+                label.className = 'seat-row-label';
+                label.textContent = row;
+                rowDiv.appendChild(label);
+                
+                // Add seats
+                for (let i = 1; i <= SEATS_PER_ROW; i++) {
+                    const seatId = `${row}${i}`;
+                    const seat = document.createElement('div');
+                    seat.className = 'seat';
+                    seat.dataset.seatId = seatId;
+                    seat.textContent = i;
+                    
+                    if (occupiedSeats.includes(seatId)) {
+                        seat.classList.add('occupied');
+                    } else {
+                        seat.onclick = () => toggleSeat(seatId);
+                    }
+                    
+                    rowDiv.appendChild(seat);
+                }
+                
+                seatMap.appendChild(rowDiv);
+            });
+        }
+        
+        /* Toggle seat selection */
+        function toggleSeat(seatId) {
+            const seatElement = document.querySelector(`[data-seat-id="${seatId}"]`);
+            
+            if (selectedSeats.includes(seatId)) {
+                // Deselect
+                selectedSeats = selectedSeats.filter(s => s !== seatId);
+                seatElement.classList.remove('selected');
+            } else {
+                // Select (max 10 seats)
+                if (selectedSeats.length >= 10) {
+                    alert('最多只能選擇10個座位');
+                    return;
+                }
+                selectedSeats.push(seatId);
+                seatElement.classList.add('selected');
+            }
+            
+            updateSelectedSeatsDisplay();
+        }
+        
+        /* Update selected seats display and price */
+        function updateSelectedSeatsDisplay() {
+            const display = document.getElementById('selectedSeatsDisplay');
+            const list = document.getElementById('selectedSeatsList');
+            const count = document.getElementById('selectedSeatsCount');
+            const seatsInput = document.getElementById('seats');
+            const selectedSeatsInput = document.getElementById('selected_seats');
+            
+            if (selectedSeats.length > 0) {
+                display.style.display = 'block';
+                list.textContent = selectedSeats.sort().join(', ');
+                count.textContent = selectedSeats.length;
+                seatsInput.value = selectedSeats.length;
+                selectedSeatsInput.value = selectedSeats.join(',');
+            } else {
+                display.style.display = 'none';
+                seatsInput.value = 1;
+                selectedSeatsInput.value = '';
+            }
+            
+            updatePrice();
+        }
         
         /* Fetch user's coupons from API */
         async function loadUserCoupons() {
             try {
                 const response = await fetch('/api/get_user_coupons');
-                const data = await response.json();
                 
-                if (data.success && data.coupons.length > 0) {
+                if (!response.ok) {
+                    console.error('Failed to fetch coupons:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Loaded coupons:', data);
+                
+                if (data.success && data.coupons && data.coupons.length > 0) {
                     availableCoupons = data.coupons;
                     const optgroup = document.getElementById('userCouponsGroup');
+                    
+                    // Clear existing options first
+                    optgroup.innerHTML = '';
                     
                     data.coupons.forEach(coupon => {
                         const option = document.createElement('option');
@@ -499,6 +887,10 @@
                         option.dataset.coupon = JSON.stringify(coupon);
                         optgroup.appendChild(option);
                     });
+                    
+                    console.log('Successfully added', data.coupons.length, 'coupons to dropdown');
+                } else {
+                    console.log('No coupons available or data.success is false');
                 }
             } catch (error) {
                 console.error('Failed to load coupons:', error);
@@ -521,6 +913,8 @@
             const manualInput = document.getElementById('manualCouponInput');
             const couponInfo = document.getElementById('couponInfo');
             
+            console.log('applyCoupon called, selectedValue:', selectedValue);
+            
             // Reset
             manualInput.style.display = 'none';
             couponInfo.classList.remove('active');
@@ -530,12 +924,23 @@
             if (selectedValue === 'manual') {
                 // Show manual input
                 manualInput.style.display = 'block';
-            } else if (selectedValue) {
+            } else if (selectedValue && selectedValue !== '') {
                 // Apply selected coupon
                 const selectedOption = select.options[select.selectedIndex];
-                const couponData = JSON.parse(selectedOption.dataset.coupon);
-                displayCouponInfo(couponData);
-                validateAndApplyDiscount(selectedValue);
+                console.log('Selected option:', selectedOption);
+                
+                if (selectedOption.dataset.coupon) {
+                    try {
+                        const couponData = JSON.parse(selectedOption.dataset.coupon);
+                        console.log('Coupon data:', couponData);
+                        displayCouponInfo(couponData);
+                        validateAndApplyDiscount(selectedValue);
+                    } catch (error) {
+                        console.error('Error parsing coupon data:', error);
+                    }
+                } else {
+                    console.error('No coupon data found in option');
+                }
             }
             
             updatePrice();
@@ -623,7 +1028,7 @@
         /* Calculate and update total price with discount */
         function updatePrice() {
             const seats = parseInt(document.getElementById('seats').value) || 1;
-            const pricePerSeat = 100;
+            const pricePerSeat = {{ movie.price }};
             const subtotal = seats * pricePerSeat;
             
             // Calculate final total with discount

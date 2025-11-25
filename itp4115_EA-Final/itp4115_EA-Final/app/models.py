@@ -210,6 +210,7 @@ class Ticket(db.Model):
     movie_title = db.Column(db.String(128), nullable=False)
     showtime = db.Column(db.String(64), nullable=False)
     seats = db.Column(db.Integer, nullable=False)
+    seat_numbers = db.Column(db.String(256), nullable=True)  # Store selected seat IDs like "A1,A2,B3"
     total_price = db.Column(db.Float, nullable=False)
     original_price = db.Column(db.Float, nullable=True)  # Price before discount
     discount_amount = db.Column(db.Float, default=0)  # Discount applied

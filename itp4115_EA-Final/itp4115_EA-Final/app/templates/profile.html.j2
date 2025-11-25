@@ -280,6 +280,36 @@
                     <span class="info-label">帳號類型</span>
                     <span class="info-value">{{ '管理員帳戶' if user.is_admin else '一般會員' }}</span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">會員等級</span>
+                    <span class="info-value" style="font-weight: bold; color: #e50914;">
+                        {% if user.membership_level == 1 %}
+                            🥉 {{ user.membership_level_name }}
+                        {% elif user.membership_level == 2 %}
+                            🥈 {{ user.membership_level_name }}
+                        {% elif user.membership_level == 3 %}
+                            🥇 {{ user.membership_level_name }}
+                        {% elif user.membership_level == 4 %}
+                            💎 {{ user.membership_level_name }}
+                        {% elif user.membership_level == 5 %}
+                            💍 {{ user.membership_level_name }}
+                        {% elif user.membership_level == 6 %}
+                            👑 {{ user.membership_level_name }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if user.is_vip %}
+                <div class="info-row">
+                    <span class="info-label">VIP 狀態</span>
+                    <span class="info-value" style="color: #ffd700; font-weight: bold;">
+                        👑 {{ user.vip_type|upper }} VIP
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">VIP 到期</span>
+                    <span class="info-value">{{ user.vip_expiry.strftime('%Y-%m-%d') if user.vip_expiry else '無限期' }}</span>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Membership Status -->
@@ -315,15 +345,27 @@
                 <h3>📊 最近活動</h3>
                 <div class="info-row">
                     <span class="info-label">購票次數</span>
-                    <span class="info-value">12 次</span>
+                    <span class="info-value">{{ total_bookings }} 次</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">最近觀影</span>
-                    <span class="info-value">3 天前</span>
+                    <span class="info-value">
+                        {% if last_booking_days is not none %}
+                            {% if last_booking_days == 0 %}
+                                今天
+                            {% elif last_booking_days == 1 %}
+                                1 天前
+                            {% else %}
+                                {{ last_booking_days }} 天前
+                            {% endif %}
+                        {% else %}
+                            尚未購票
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">最愛電影類型</span>
-                    <span class="info-value">動作 / 科幻</span>
+                    <span class="info-value">{{ favorite_genre }}</span>
                 </div>
             </div>
         </div>

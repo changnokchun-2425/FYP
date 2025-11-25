@@ -458,6 +458,16 @@
                         </div>
                     </div>
 
+                    {% if booking.seat_numbers %}
+                    <div class="detail-item">
+                        <span class="detail-icon">💺</span>
+                        <div class="detail-content">
+                            <div class="detail-label">座位號</div>
+                            <div class="detail-value" style="color: #4CAF50; font-weight: bold;">{{ booking.seat_numbers }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="detail-item">
                         <span class="detail-icon">👤</span>
                         <div class="detail-content">

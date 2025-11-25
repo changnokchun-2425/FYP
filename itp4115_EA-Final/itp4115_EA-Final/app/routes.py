@@ -2,6 +2,10 @@ from flask import render_template, redirect, flash, url_for, request, jsonify, m
 from flask_login import login_required, current_user, login_user, logout_user 
 from urllib.parse import urlparse
 from flask.cli import AppGroup
+from datetime import datetime, timedelta
+import random
+import sqlite3
+import os
 
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, ProductForm, CategoryForm
@@ -18,6 +22,67 @@ from app.data.coupon_system import (
     exchange_points_for_coupon
 )
 admin_cli = AppGroup('admin')
+
+# Initialize database - add seat_numbers column if it doesn't exist
+def init_seat_numbers_column():
+    """Add seat_numbers column to ticket table if it doesn't exist"""
+    try:
+        # Get the correct database path
+        basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        db_path = os.path.join(basedir, 'app.db')
+        
+        print(f"[DB Init] Checking database at: {db_path}")
+        print(f"[DB Init] Database exists: {os.path.exists(db_path)}")
+        
+        if not os.path.exists(db_path):
+            print("[DB Init] Database file not found, skipping column check")
+            return
+        
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Check if ticket table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ticket'")
+        if not cursor.fetchone():
+            print("[DB Init] Ticket table doesn't exist yet, skipping column check")
+            conn.close()
+            return
+        
+        # Check if column exists
+        cursor.execute("PRAGMA table_info(ticket)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        print(f"[DB Init] Current ticket columns: {columns}")
+        
+        if 'seat_numbers' not in columns:
+            print("[DB Init] Adding seat_numbers column...")
+            cursor.execute("ALTER TABLE ticket ADD COLUMN seat_numbers VARCHAR(256)")
+            conn.commit()
+            print("[DB Init] ✓ Successfully added seat_numbers column to ticket table")
+        else:
+            print("[DB Init] ✓ seat_numbers column already exists")
+        
+        conn.close()
+    except Exception as e:
+        print(f"[DB Init] Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Run initialization
+try:
+    with app.app_context():
+        init_seat_numbers_column()
+except Exception as e:
+    print(f"[DB Init] Failed to initialize: {e}")
+
+
+@app.cli.command('init-db')
+def init_db_command():
+    """Initialize database with seat_numbers column"""
+    print("Initializing database...")
+    init_seat_numbers_column()
+    print("Database initialization complete!")
+
 
 @app.route("/")
 def home():
@@ -130,7 +195,37 @@ def profile():
         user.points = 0
         db.session.commit()
     
-    return render_template("profile.html.j2", title="Profile", user=user, coupon_count=coupon_count)
+    # Get user's ticket statistics
+    user_tickets = Ticket.query.filter_by(user_id=user.id).order_by(Ticket.booking_date.desc()).all()
+    total_bookings = len(user_tickets)
+    
+    # Calculate last booking time
+    last_booking_days = None
+    last_booking_date = None
+    if user_tickets:
+        last_ticket = user_tickets[0]
+        last_booking_date = last_ticket.booking_date
+        time_diff = datetime.utcnow() - last_booking_date
+        last_booking_days = time_diff.days
+    
+    # Calculate favorite genre from bookings
+    from collections import Counter
+    genre_counter = Counter()
+    for ticket in user_tickets:
+        # Find the movie to get its genre
+        movie = next((m for m in movies if m['id'] == ticket.movie_id), None)
+        if movie and 'genre' in movie:
+            genre_counter[movie['genre']] += 1
+    
+    favorite_genre = genre_counter.most_common(1)[0][0] if genre_counter else "尚未觀影"
+    
+    return render_template("profile.html.j2", 
+                         title="Profile", 
+                         user=user, 
+                         coupon_count=coupon_count,
+                         total_bookings=total_bookings,
+                         last_booking_days=last_booking_days,
+                         favorite_genre=favorite_genre)
 
 ####################################################################################################
 
@@ -353,6 +448,28 @@ def edit_product(product_id):
     return render_template('edit_product.html.j2', form=form, product=product, categories=categories)  # Pass categories to template
 
 
+# Helper function to generate random showtimes
+def generate_showtimes(num_shows=4):
+    """Generate random showtimes for a movie"""
+    base_date = datetime.now().date()
+    showtimes = []
+    
+    # Possible time slots (in hours)
+    time_slots = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+    
+    # Randomly select time slots
+    selected_times = random.sample(time_slots, min(num_shows, len(time_slots)))
+    selected_times.sort()
+    
+    for hour in selected_times:
+        # Add random minutes (00, 15, 30, 45)
+        minutes = random.choice([0, 15, 30, 45])
+        showtime = datetime.combine(base_date, datetime.min.time().replace(hour=hour, minute=minutes))
+        showtimes.append(showtime.strftime('%Y-%m-%d %H:%M'))
+    
+    return showtimes
+
+
 # FYP Cinema Routes - 參考 https://www.mclcinema.com/
 movies = [
     {
@@ -363,7 +480,7 @@ movies = [
         'duration': '127 分鐘',
         'rating': 'IIA',
         'genre': '科幻 / 動作',
-        'showtimes': ['2025-10-15 11:00', '2025-10-15 14:00', '2025-10-15 17:00', '2025-10-15 20:00']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 2,
@@ -373,7 +490,7 @@ movies = [
         'duration': '127 分鐘',
         'rating': 'IIA',
         'genre': '科幻 / 動作',
-        'showtimes': ['2025-10-15 12:30', '2025-10-15 15:30', '2025-10-15 18:30', '2025-10-15 21:30']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 3,
@@ -383,7 +500,7 @@ movies = [
         'duration': '135 分鐘',
         'rating': 'IIB',
         'genre': '動作 / 戰爭',
-        'showtimes': ['2025-10-15 13:00', '2025-10-15 16:00', '2025-10-15 19:00', '2025-10-15 22:00']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 4,
@@ -393,7 +510,7 @@ movies = [
         'duration': '105 分鐘',
         'rating': 'I',
         'genre': '音樂 / 紀錄',
-        'showtimes': ['2025-10-15 14:00', '2025-10-15 17:30', '2025-10-15 20:30']
+        'showtimes': generate_showtimes(3)
     },
     {
         'id': 5,
@@ -403,7 +520,7 @@ movies = [
         'duration': '95 分鐘',
         'rating': 'IIB',
         'genre': '動畫 / 動作',
-        'showtimes': ['2025-10-15 12:00', '2025-10-15 15:00', '2025-10-15 18:00', '2025-10-15 21:00']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 6,
@@ -413,7 +530,7 @@ movies = [
         'duration': '95 分鐘',
         'rating': 'IIB',
         'genre': '動畫 / 動作',
-        'showtimes': ['2025-10-15 11:30', '2025-10-15 14:30', '2025-10-15 17:30', '2025-10-15 20:30']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 7,
@@ -423,7 +540,7 @@ movies = [
         'duration': '109 分鐘',
         'rating': 'IIA',
         'genre': '動作 / 賽車',
-        'showtimes': ['2025-10-15 13:30', '2025-10-15 16:30', '2025-10-15 19:30', '2025-10-15 22:30']
+        'showtimes': generate_showtimes(4)
     },
     {
         'id': 8,
@@ -433,7 +550,7 @@ movies = [
         'duration': '98 分鐘',
         'rating': 'IIA',
         'genre': '愛情 / 喜劇',
-        'showtimes': ['2025-10-15 14:00', '2025-10-15 17:00', '2025-10-15 20:00']
+        'showtimes': generate_showtimes(3)
     },
     {
         'id': 9,
@@ -443,7 +560,7 @@ movies = [
         'duration': '120 分鐘',
         'rating': 'IIA',
         'genre': '愛情 / 喜劇',
-        'showtimes': ['2025-10-15 19:00']
+        'showtimes': generate_showtimes(1)
     },
     {
         'id': 10,
@@ -453,7 +570,7 @@ movies = [
         'duration': '102 分鐘',
         'rating': 'IIA',
         'genre': '喜劇 / 動作',
-        'showtimes': ['2025-10-15 13:00', '2025-10-15 16:00', '2025-10-15 19:00', '2025-10-15 22:00']
+        'showtimes': generate_showtimes(4)
     }
 ]
 
@@ -524,7 +641,21 @@ def cinema_movie(movie_id):
     if not movie:
         flash('電影不存在！')
         return redirect(url_for('cinema_index'))
-    return render_template('cinema_movie.html.j2', movie=movie)
+    
+    # Calculate price based on duration (1 minute = $1 HK)
+    duration_str = movie.get('duration', '100 分鐘')
+    # Extract number from string like "127 分鐘"
+    import re
+    duration_match = re.search(r'(\d+)', duration_str)
+    if duration_match:
+        duration_minutes = int(duration_match.group(1))
+    else:
+        duration_minutes = 100  # Default fallback
+    
+    movie_with_price = movie.copy()
+    movie_with_price['price'] = duration_minutes
+    
+    return render_template('cinema_movie.html.j2', movie=movie_with_price)
 
 @app.route('/cinema/coming_soon')
 def cinema_coming_soon():
@@ -538,6 +669,7 @@ def cinema_buy_ticket():
     name = request.form['name']
     email = request.form['email']
     seats = int(request.form['seats'])
+    selected_seats = request.form.get('selected_seats', '').strip()  # Get selected seat IDs
     coupon_code = request.form.get('coupon_code', '').strip()  # Get coupon code if provided
     
     movie = next((m for m in movies if m['id'] == movie_id), None)
@@ -546,8 +678,17 @@ def cinema_buy_ticket():
         flash('電影不存在！', 'error')
         return redirect(url_for('cinema_index'))
     
+    # Calculate price per ticket based on duration (1 minute = $1 HK)
+    import re
+    duration_str = movie.get('duration', '100 分鐘')
+    duration_match = re.search(r'(\d+)', duration_str)
+    if duration_match:
+        price_per_ticket = int(duration_match.group(1))
+    else:
+        price_per_ticket = 100  # Default fallback
+    
     # Calculate base price
-    base_price = seats * 100  # HK$100 per seat
+    base_price = seats * price_per_ticket
     original_price = base_price
     discount_amount = 0
     coupon_used = None
@@ -573,6 +714,7 @@ def cinema_buy_ticket():
         movie_title=movie['title'],
         showtime=showtime,
         seats=seats,
+        seat_numbers=selected_seats if selected_seats else None,
         original_price=original_price,
         discount_amount=discount_amount,
         total_price=base_price,
@@ -1012,15 +1154,18 @@ def api_get_user_coupons():
     Get available coupons for current user
     Returns JSON list of coupons
     """
+    print(f"[DEBUG] api_get_user_coupons called by user {current_user.id}")
+    
     # Get only valid coupons
     user_coupons = get_user_coupons(current_user.id, include_used=False)
+    print(f"[DEBUG] Found {len(user_coupons)} coupons for user")
     
     coupons_data = []
     for coupon in user_coupons:
         coupon_info = get_coupon_info(coupon)
         template = COUPON_TYPES.get(coupon.coupon_type, {})
         
-        coupons_data.append({
+        coupon_dict = {
             'code': coupon.code,
             'name': coupon_info['name'],
             'description': coupon_info['description'],
@@ -1030,11 +1175,15 @@ def api_get_user_coupons():
             'min_purchase': coupon_info['min_purchase'],
             'expiry_date': coupon.expiry_date.strftime('%Y-%m-%d'),
             'days_remaining': coupon_info['days_remaining']
-        })
+        }
+        coupons_data.append(coupon_dict)
+        print(f"[DEBUG] Added coupon: {coupon.code} - {coupon_info['name']}")
     
-    return jsonify({
+    result = {
         'success': True,
         'coupons': coupons_data,
         'count': len(coupons_data)
-    })
+    }
+    print(f"[DEBUG] Returning {len(coupons_data)} coupons")
+    return jsonify(result)
 
