@@ -1,279 +1,51 @@
-{# ========================================
-   COMING SOON PAGE
-   ========================================
-   Purpose: Display upcoming movie releases
-   Features:
-   - Movie cards with release dates
-   - Release date badges
-   - Notify me buttons
-   - Timeline view
-======================================== #}
+{% extends "base.html.j2" %}
+{% block title %}即將上映 - FYP Cinema{% endblock %}
+{% block content %}
+<style>
+    .soon-hero {
+        margin-top: 18px;
+        padding: 24px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: radial-gradient(circle at 20% 20%, rgba(246,208,0,0.18), transparent 35%), var(--panel);
+    }
+    .soon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+    .soon-card { position: relative; overflow: hidden; }
+    .badge-release { position: absolute; top: 10px; left: 10px; padding: 6px 10px; border-radius: 999px; background: var(--primary); color: #0b0b0b; font-weight: 800; font-size: 0.85rem; }
+    .soon-title { margin: 10px 0 6px 0; font-size: 1rem; }
+    .soon-meta { color: var(--muted); font-size: 0.85rem; display: flex; gap: 8px; flex-wrap: wrap; }
+    .soon-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 8px 0; }
+    .btn-notify { width: 100%; text-align: center; }
+</style>
 
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>即將上映 - FYP Cinema</title>
-    <style>
-        /* ========== GLOBAL RESET ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<section class="soon-hero">
+    <h1 style="margin:0 0 6px 0;">📅 即將上映</h1>
+    <p style="margin:0; color: var(--muted);">提前鎖定想看的電影，演出前收到通知。</p>
+</section>
 
-        body {
-            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
-            background-color: #0a0a0a;
-            color: #ffffff;
-            line-height: 1.6;
-        }
-
-        header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        header h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        nav {
-            background-color: #1a1a1a;
-            padding: 1rem;
-            text-align: center;
-            border-bottom: 2px solid #2a5298;
-        }
-
-        nav a {
-            color: #ffffff;
-            text-decoration: none;
-            margin: 0 1.5rem;
-            font-size: 1.1rem;
-            transition: color 0.3s;
-        }
-
-        nav a:hover, nav a.active {
-            color: #e50914;
-        }
-
-        main {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        h2 {
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            background: linear-gradient(90deg, #e50914, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .timeline {
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .timeline h3 {
-            font-size: 2rem;
-            color: #ff9800;
-            margin-bottom: 1rem;
-        }
-
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 2.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .movie-card {
-            background-color: #1a1a1a;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .movie-card:hover {
-            transform: translateY(-15px);
-            box-shadow: 0 12px 20px rgba(229, 9, 20, 0.4);
-        }
-
-        .movie-card img {
-            width: 100%;
-            height: 420px;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-
-        .movie-card:hover img {
-            transform: scale(1.05);
-        }
-
-        /* ========== RELEASE DATE BADGE ========== */
-        .release-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: linear-gradient(135deg, #ff9800, #ff5722);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.5);
-        }
-
-        .movie-info {
-            padding: 1.5rem;
-        }
-
-        .movie-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        .movie-meta {
-            display: flex;
-            gap: 1rem;
-            margin: 0.5rem 0;
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        .movie-meta span {
-            background-color: #2a2a2a;
-            padding: 0.3rem 0.6rem;
-            border-radius: 5px;
-        }
-
-        .movie-info p {
-            color: #cccccc;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .notify-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #2a5298, #1e3c72);
-            color: white;
-            padding: 0.9rem 2rem;
-            text-decoration: none;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(42, 82, 152, 0.3);
-            width: 100%;
-            text-align: center;
-        }
-
-        .notify-btn:hover {
-            background: linear-gradient(135deg, #3a62a8, #2a5298);
-            box-shadow: 0 6px 12px rgba(42, 82, 152, 0.5);
-            transform: translateY(-2px);
-        }
-
-        footer {
-            background-color: #0a0a0a;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
-            border-top: 2px solid #2a5298;
-        }
-
-        footer p {
-            color: #888;
-        }
-
-        @media (max-width: 768px) {
-            .movie-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            h2 {
-                font-size: 2rem;
-            }
-
-            nav a {
-                display: inline-block;
-                margin: 0.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>🎬 FYP Cinema</h1>
-        <p>即將上映 - 敬請期待</p>
-    </header>
-
-    <nav>
-        <a href="{{ url_for('cinema_index') }}">🎬 現正熱映</a>
-        <a href="{{ url_for('cinema_coming_soon') }}" class="active">📅 即將上映</a>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('profile') }}">👤 個人中心</a>
-        <a href="{{ url_for('logout') }}">🚪 登出</a>
-        {% else %}
-        <a href="{{ url_for('login') }}">🔑 登入</a>
-        <a href="{{ url_for('register') }}">✨ 註冊</a>
-        {% endif %}
-    </nav>
-    
-    <main>
-        <h2>🔜 即將上映電影</h2>
-        
-        <div class="timeline">
-            <h3>2026 年度大片搶先看</h3>
-        </div>
-
-        <div class="movie-grid">
-            {% for movie in movies %}
-            <div class="movie-card">
-                <span class="release-badge">{{ movie.release_date }} 上映</span>
-                <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450?text=MCL+Cinema'">
-                <div class="movie-info">
-                    <h3>{{ movie.title }}</h3>
-                    <div class="movie-meta">
-                        <span>⏱️ {{ movie.duration }}</span>
-                        <span>📊 {{ movie.rating }}</span>
-                    </div>
-                    <p style="color: #e50914; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ movie.genre }}</p>
-                    <p>{{ movie.description }}</p>
-                    <a href="#" class="notify-btn">🔔 設定上映提醒</a>
+<section class="section">
+    <div class="section-header">
+        <h2>不日上映</h2>
+        <span class="pill">{{ movies|length }} 套即將上映</span>
+    </div>
+    <div class="soon-grid">
+        {% for movie in movies %}
+        <article class="card soon-card">
+            <span class="badge-release">{{ movie.release_date }} 上映</span>
+            <img class="movie-poster" src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450?text=FYP+Cinema'">
+            <div class="movie-body">
+                <h3 class="soon-title">{{ movie.title }}</h3>
+                <div class="soon-meta">
+                    {% if movie.genre %}<span class="badge">{{ movie.genre }}</span>{% endif %}
+                    {% if movie.rating %}<span class="badge">{{ movie.rating }}</span>{% endif %}
                 </div>
+                <p class="soon-desc">{{ movie.description or '片方資訊即將公布。' }}</p>
+                <a class="btn btn-primary btn-notify" href="{{ url_for('cinema_movie', movie_id=movie.id) }}">🔔 關注影片</a>
             </div>
-            {% endfor %}
-        </div>
-    </main>
-    
-    <footer>
-        <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
-    </footer>
-</body>
-</html>
+        </article>
+        {% else %}
+            <div class="card" style="padding:16px;">暫無影片</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -14,128 +14,200 @@
 ======================================== #}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
-    <!-- ========== META TAGS ========== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- ========== EXTERNAL STYLESHEETS ========== -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
-    <title>{% block title %}Pegasus Shop{% endblock %}</title>
-    
-    <!-- ========== CUSTOM STYLES ========== -->
+    <title>{% block title %}FYP Cinema{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #0b0b0b;
+            --panel: #111111;
+            --panel-2: #161616;
+            --text: #f5f5f5;
+            --muted: #9ca3af;
+            --primary: #f6d000;
+            --accent: #ffd83a;
+            --danger: #ff4d4f;
+            --border: #1f1f1f;
+            --card-radius: 14px;
+            --shadow: 0 18px 40px rgba(0,0,0,0.35);
+        }
+        * { box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-            min-height: 100vh;
-            color: #fff;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
         }
-        .cinema-header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 2rem;
+        a { color: inherit; text-decoration: none; }
+        .page-shell { max-width: 1400px; margin: 0 auto; padding: 0 24px 48px; }
+        header.navbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(11,11,11,0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            gap: 16px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+        }
+        .nav-links {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex: 1;
+            margin-left: 20px;
+        }
+        .nav-link {
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: var(--muted);
+            font-weight: 600;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+        .nav-link:hover { color: var(--text); background: var(--panel-2); }
+        .nav-link.active { color: var(--bg); background: var(--primary); }
+        .nav-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            min-width: 240px;
+        }
+        .nav-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            width: 100%;
+            font-size: 0.95rem;
+        }
+        .nav-auth { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .btn-primary { background: var(--primary); color: #0b0b0b; box-shadow: 0 10px 25px rgba(246,208,0,0.25); }
+        .btn-primary:hover { transform: translateY(-1px); }
+        .btn-ghost { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+        .btn-ghost:hover { border-color: var(--primary); }
+        .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 0.85rem; background: var(--panel-2); color: var(--muted); }
+        .pill.hot { background: rgba(246,208,0,0.15); color: var(--primary); }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+        }
+        .section { padding: 28px 0; }
+        .section h2 { margin: 0 0 14px 0; font-size: 1.3rem; letter-spacing: 0.3px; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+        .flash-stack { padding: 16px 0; }
+        .flash {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+        }
+        .flash.success { border-color: rgba(40,167,69,0.4); color: #c2fbd7; }
+        .flash.error { border-color: rgba(255,77,79,0.4); color: #ffc2c4; }
+        .flash.info { color: var(--text); }
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            color: var(--muted);
+            background: var(--panel-2);
         }
-        .cinema-header h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            color: #fff;
-        }
-        .cinema-header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            color: #fff;
-        }
-        .cinema-nav {
-            background-color: #1a1a1a;
-            padding: 1rem;
-            text-align: center;
-            border-bottom: 2px solid #2a5298;
-        }
-        .cinema-nav a {
-            color: #ffffff;
-            text-decoration: none;
-            margin: 0 1.5rem;
-            font-size: 1.1rem;
-            transition: color 0.3s;
-        }
-        .cinema-nav a:hover,
-        .cinema-nav a.active {
-            color: #e50914;
-        }
-        .footer {
-            background-color: #0a0a0a;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
-            border-top: 2px solid #2a5298;
-        }
-        .footer div {
-            color: #888;
-        }
-        @media (max-width: 768px) {
-            .cinema-nav a {
-                display: inline-block;
-                margin: 0.5rem;
-            }
+        @media (max-width: 960px) {
+            .nav-inner { flex-wrap: wrap; }
+            .nav-links { order: 3; width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+            .nav-search { order: 2; width: 100%; }
+            .nav-auth { order: 1; width: 100%; justify-content: flex-end; }
         }
     </style>
 </head>
 <body>
-    <!-- ========================================
-         SITE HEADER
-    ======================================== -->
-    <header class="cinema-header">
-        <h1>🎬 FYP Cinema</h1>
-        <p>香港首選電影院線 - 極致觀影體驗</p>
+    <header class="navbar">
+        <div class="nav-inner">
+            <div class="brand">HK Movie • FYP</div>
+            <div class="nav-links">
+                <a class="nav-link{% if request.endpoint == 'cinema_index' %} active{% endif %}" href="{{ url_for('cinema_index') }}">即日上映</a>
+                <a class="nav-link{% if request.endpoint == 'cinema_coming_soon' %} active{% endif %}" href="{{ url_for('cinema_coming_soon') }}">即將上映</a>
+                <a class="nav-link" href="{{ url_for('index') }}">主頁</a>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <a class="nav-link{% if request.endpoint == 'admin_console' %} active{% endif %}" href="{{ url_for('admin_console') }}">管理後台</a>
+                {% endif %}
+            </div>
+            <div class="nav-search">
+                <span style="color: var(--muted); font-weight: 700;">🔍</span>
+                <input type="search" placeholder="搜尋電影、演員、類型" aria-label="搜尋電影">
+            </div>
+            <div class="nav-auth">
+                {% if current_user.is_authenticated %}
+                    <a class="btn btn-ghost" href="{{ url_for('profile') }}">{{ current_user.username }}</a>
+                    <a class="btn btn-primary" href="{{ url_for('logout') }}">登出</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{{ url_for('login') }}">登入</a>
+                    <a class="btn btn-primary" href="{{ url_for('register') }}">註冊</a>
+                {% endif %}
+            </div>
+        </div>
     </header>
 
-    <nav class="cinema-nav">
-        <a href="{{ url_for('cinema_index') }}">🎬 現正熱映</a>
-        <a href="{{ url_for('cinema_coming_soon') }}">📅 即將上映</a>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('profile') }}">👤 個人中心</a>
-        <a href="{{ url_for('logout') }}">🚪 登出</a>
-        {% else %}
-        <a href="{{ url_for('login') }}">🔑 登入</a>
-        <a href="{{ url_for('register') }}">✨ 註冊</a>
-        {% endif %}
-    </nav>
-    </nav>
-    
-    <div style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);">
+    <div class="page-shell">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div style="max-width: 1400px; margin: 0 auto; padding: 1rem 2rem 0;">
+                <div class="flash-stack">
                     {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% elif category == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show" role="alert">
-                        {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}ℹ️{% endif %}
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="flash {% if category == 'error' %}error{% elif category == 'success' %}success{% else %}info{% endif %}">
+                            <span>{% if category == 'success' %}✅{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}</span>
+                            <span>{{ message }}</span>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
         {% endwith %}
+
         {% block content %}{% endblock %}
     </div>
-    <footer class="footer">
-        <div>
-            &copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線
-            <br>
-            客戶服務熱線: 2317 6666
-        </div>
-    </footer>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
+    <footer>
+        <div>&copy; 2025 FYP Cinema | Inspired by HKMovie • 客戶服務熱線: 2317 6666</div>
+    </footer>
 </body>
 </html>

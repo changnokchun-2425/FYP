@@ -1,0 +1,79 @@
+{% extends "base.html.j2" %}
+{% block title %}Admin Console{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <style>
+        .admin-hero {background: linear-gradient(135deg, rgba(246,208,0,0.16), rgba(246,208,0,0.05)); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow);}
+        .admin-hero h1 {margin: 0 0 6px 0; letter-spacing: 0.4px;}
+        .admin-hero p {margin: 0; color: var(--muted);}
+        .admin-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 16px;}
+        .admin-card {background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: transform 0.2s ease, border-color 0.2s ease;}
+        .admin-card:hover {transform: translateY(-2px); border-color: var(--primary);}
+        .admin-card .label {color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;}
+        .admin-card .value {font-size: 1.8rem; font-weight: 800; color: var(--text); margin-top: 4px;}
+        .actions-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px;}
+        .action-card {background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; height: 100%;}
+        .action-card h3 {margin: 0; font-size: 1.1rem; color: var(--text);}
+        .action-card p {margin: 0; color: var(--muted); font-size: 0.95rem;}
+        .action-card a {align-self: flex-start; background: var(--primary); color: #0b0b0b; padding: 10px 14px; border-radius: 10px; text-decoration: none; font-weight: 700; letter-spacing: 0.2px; transition: background 0.2s ease, transform 0.2s ease;}
+        .action-card a:hover {transform: translateY(-1px);}
+    </style>
+
+    <div class="admin-shell">
+        <div class="admin-hero mb-4">
+            <h1>Admin Console</h1>
+            <p>Quick controls for products and cinema content.</p>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-card">
+                <div class="label">Products</div>
+                <div class="value">{{ stats.products }}</div>
+            </div>
+            <div class="admin-card">
+                <div class="label">Categories</div>
+                <div class="value">{{ stats.categories }}</div>
+            </div>
+            <div class="admin-card">
+                <div class="label">Tickets</div>
+                <div class="value">{{ stats.tickets }}</div>
+            </div>
+            <div class="admin-card">
+                <div class="label">Movies</div>
+                <div class="value">{{ stats.movies }}</div>
+            </div>
+            <div class="admin-card">
+                <div class="label">Now Showing</div>
+                <div class="value">{{ now_showing_total }}</div>
+            </div>
+            <div class="admin-card">
+                <div class="label">Coming Soon</div>
+                <div class="value">{{ coming_soon_total }}</div>
+            </div>
+        </div>
+
+        <div class="actions-grid mt-4">
+            <div class="action-card">
+                <h3>Manage Products</h3>
+                <p>Review, edit, delete, and add products in one place.</p>
+                <a href="{{ url_for('get_products') }}">Open Products</a>
+            </div>
+            <div class="action-card">
+                <h3>Add Category</h3>
+                <p>Keep the catalog organized with clear categories.</p>
+                <a href="{{ url_for('add_category') }}">New Category</a>
+            </div>
+            <div class="action-card">
+                <h3>Movies – Admin</h3>
+                <p>Edit status/metadata or delete movies across all types.</p>
+                <a href="{{ url_for('admin_movies') }}">Open Movie Manager</a>
+            </div>
+            <div class="action-card">
+                <h3>Cinema – Now Showing</h3>
+                <p>Preview the live movie lineup as customers see it.</p>
+                <a href="{{ url_for('cinema_index') }}">View Listing</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

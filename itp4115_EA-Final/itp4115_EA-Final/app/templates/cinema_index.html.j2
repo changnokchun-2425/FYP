@@ -1,266 +1,84 @@
-{# ========================================
-   CINEMA INDEX PAGE - Now Showing Movies
-   ========================================
-   Purpose: Display currently showing movies in grid layout
-   Features: 
-   - Movie cards with posters and details
-   - Navigation bar
-   - Responsive grid layout
-======================================== #}
+{% extends "base.html.j2" %}
+{% block title %}即日上映 - FYP Cinema{% endblock %}
+{% block content %}
+<style>
+    .hero {
+        margin-top: 18px;
+        padding: 26px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(246,208,0,0.14), rgba(246,208,0,0.04));
+        border: 1px solid var(--border);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: center;
+    }
+    .hero-text h1 { margin: 0 0 6px 0; font-size: 1.6rem; letter-spacing: 0.3px; }
+    .hero-text p { margin: 0; color: var(--muted); }
+    .hero-actions { display: flex; gap: 10px; }
+    .movie-card-hk {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: var(--card-radius);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+    .movie-poster {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        background: #0e0e0e;
+        border-bottom: 1px solid var(--border);
+    }
+    .movie-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .movie-title { margin: 0; font-size: 1rem; font-weight: 800; }
+    .movie-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+    .badge { padding: 4px 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); }
+    .movie-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .movie-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .section-header .pill { background: rgba(246,208,0,0.12); color: var(--primary); }
+</style>
 
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-    <!-- ========== META TAGS ========== -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYP Cinema - 香港首選電影院線</title>
-    
-    <!-- ========== EXTERNAL STYLESHEETS ========== -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='cinema.css') }}">
-    
-    <!-- ========== PAGE STYLES ========== -->
-    <style>
-        /* ========== GLOBAL RESET ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<section class="hero">
+    <div class="hero-text">
+        <h1>即日上映 • 精選場次</h1>
+        <p>黑金配色 + 黃色點綴，重現 HKMovie6 的戲院氛圍。</p>
+    </div>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('cinema_coming_soon') }}">查看即將上映</a>
+        <a class="btn btn-ghost" href="{{ url_for('index') }}">回到主頁</a>
+    </div>
+</section>
 
-        /* ========== BODY STYLES ========== */
-        body {
-            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
-            background-color: #0a0a0a;
-            color: #ffffff;
-            line-height: 1.6;
-        }
-
-        /* ========== HEADER STYLES ========== */
-        header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        header h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        /* ========== NAVIGATION BAR ========== */
-        nav {
-            background-color: #1a1a1a;
-            padding: 1rem;
-            text-align: center;
-            border-bottom: 2px solid #2a5298;
-        }
-
-        nav a {
-            color: #ffffff;
-            text-decoration: none;
-            margin: 0 1.5rem;
-            font-size: 1.1rem;
-            transition: color 0.3s;
-        }
-
-        nav a:hover {
-            color: #e50914;
-        }
-
-        main {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        h2 {
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            background: linear-gradient(90deg, #e50914, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* ========== MOVIE GRID LAYOUT ========== */
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 2.5rem;
-            margin-bottom: 3rem;
-        }
-
-        /* ========== MOVIE CARD STYLES ========== */
-        .movie-card {
-            background-color: #1a1a1a;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .movie-card:hover {
-            transform: translateY(-15px);
-            box-shadow: 0 12px 20px rgba(229, 9, 20, 0.4);
-        }
-
-        .movie-card img {
-            width: 100%;
-            height: 420px;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-
-        .movie-card:hover img {
-            transform: scale(1.05);
-        }
-
-        .movie-info {
-            padding: 1.5rem;
-        }
-
-        .movie-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        .movie-meta {
-            display: flex;
-            gap: 1rem;
-            margin: 0.5rem 0;
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        .movie-meta span {
-            background-color: #2a2a2a;
-            padding: 0.3rem 0.6rem;
-            border-radius: 5px;
-        }
-
-        .movie-info p {
-            color: #cccccc;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #e50914, #b20710);
-            color: white;
-            padding: 0.9rem 2rem;
-            text-decoration: none;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(229, 9, 20, 0.3);
-        }
-
-        .btn:hover {
-            background: linear-gradient(135deg, #ff1a24, #e50914);
-            box-shadow: 0 6px 12px rgba(229, 9, 20, 0.5);
-            transform: translateY(-2px);
-        }
-
-        footer {
-            background-color: #0a0a0a;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
-            border-top: 2px solid #2a5298;
-        }
-
-        footer p {
-            color: #888;
-        }
-
-        /* ========== RESPONSIVE DESIGN - MOBILE ========== */
-        @media (max-width: 768px) {
-            .movie-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            h2 {
-                font-size: 2rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- ========================================
-         HEADER SECTION
-    ======================================== -->
-    <header>
-        <h1>🎬 FYP Cinema</h1>
-        <p>香港首選電影院線 - 極致觀影體驗</p>
-    </header>
-
-    <!-- ========================================
-         NAVIGATION BAR
-    ======================================== -->
-    <nav>
-        <a href="{{ url_for('cinema_index') }}" class="active">🎬 現正熱映</a>
-        <a href="{{ url_for('cinema_coming_soon') }}">📅 即將上映</a>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('profile') }}">👤 個人中心</a>
-        <a href="{{ url_for('logout') }}">🚪 登出</a>
-        {% else %}
-        <a href="{{ url_for('login') }}">🔑 登入</a>
-        <a href="{{ url_for('register') }}">✨ 註冊</a>
-        {% endif %}
-    </nav>
-    
-    <!-- ========================================
-         MAIN CONTENT - Movie Grid
-    ======================================== -->
-    <main>
-        <h2>🔥 現正熱映</h2>
-        
-        <!-- Movie Grid Container -->
-        <div class="movie-grid">
-            {# Loop through all movies from database #}
-            {% for movie in movies %}
-            <div class="movie-card">
-                <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450?text=MCL+Cinema'">
-                <div class="movie-info">
-                    <h3>{{ movie.title }}</h3>
-                    <div class="movie-meta">
-                        <span>⏱️ {{ movie.duration }}</span>
-                        <span>📊 {{ movie.rating }}</span>
-                    </div>
-                    <p style="color: #e50914; font-size: 0.9rem; margin-bottom: 0.5rem;">{{ movie.genre }}</p>
-                    <p>{{ movie.description }}</p>
-                    <a href="{{ url_for('cinema_movie', movie_id=movie.id) }}" class="btn">🎟️ 立即購票</a>
+<section class="section">
+    <div class="section-header">
+        <h2>即日上映</h2>
+        <span class="pill">{{ movies|length }} 套電影</span>
+    </div>
+    <div class="grid-cards">
+        {% for movie in movies %}
+        <article class="movie-card-hk">
+            <img class="movie-poster" src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450?text=FYP+Cinema'">
+            <div class="movie-body">
+                <h3 class="movie-title">{{ movie.title }}</h3>
+                <div class="movie-meta">
+                    <span class="badge">{{ movie.rating or 'IIB' }}</span>
+                    <span class="badge">{{ movie.duration }}</span>
+                    {% if movie.genre %}<span class="badge">{{ movie.genre }}</span>{% endif %}
+                </div>
+                <p class="movie-desc">{{ movie.description or '精彩內容敬請期待。' }}</p>
+                <div class="movie-actions">
+                    <a class="btn btn-primary" href="{{ url_for('cinema_movie', movie_id=movie.id) }}">購票</a>
+                    <span class="pill">🎟️ 熱賣中</span>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-    </main>
-    
-    <!-- ========================================
-         FOOTER SECTION
-    ======================================== -->
-    <footer>
-        <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
-    </footer>
-</body>
-</html>
+        </article>
+        {% else %}
+            <div class="card" style="padding:16px;">暫無電影資料。</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

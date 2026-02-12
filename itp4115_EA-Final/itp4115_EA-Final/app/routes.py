@@ -3,13 +3,30 @@ from flask_login import login_required, current_user, login_user, logout_user
 from urllib.parse import urlparse
 from flask.cli import AppGroup
 from datetime import datetime, timedelta
-import random
 import sqlite3
 import os
 
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, ProductForm, CategoryForm
-from app.models import User, Category, Product, Article, Comment, Tag, ArticleTag, Source, Reaction, Author, Newsletter, Ticket, Coupon
+from app.models import (
+    User,
+    Category,
+    Product,
+    Article,
+    Comment,
+    Tag,
+    ArticleTag,
+    Source,
+    Reaction,
+    Author,
+    Newsletter,
+    Ticket,
+    Coupon,
+    Movie,
+    Cinema,
+    Hall,
+    Showtime,
+)
 from app.data.coupon_system import (
     create_welcome_coupon,
     get_user_coupons,
@@ -21,7 +38,168 @@ from app.data.coupon_system import (
     get_points_coupons,
     exchange_points_for_coupon
 )
+from app.data import sample_movies
 admin_cli = AppGroup('admin')
+
+
+def _parse_duration_to_minutes(raw_duration):
+    """Convert strings like '127 分鐘' or '181分鐘' to integer minutes."""
+    if raw_duration is None:
+        return None
+    import re
+    match = re.search(r"(\d+)", str(raw_duration))
+    return int(match.group(1)) if match else None
+
+
+def _format_duration_label(minutes):
+    if minutes is None:
+        return "未知時長"
+    return f"{minutes} 分鐘"
+
+
+def _format_showtime_label(showtime_obj):
+    dt = datetime.combine(showtime_obj.show_date, showtime_obj.show_time)
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
+def _movie_view_model(movie, include_showtimes=False):
+    showtimes = []
+    if include_showtimes:
+        showtimes = [
+            {
+                'id': st.id,
+                'label': _format_showtime_label(st),
+                'price': st.price,
+            }
+            for st in sorted(movie.showtimes, key=lambda s: (s.show_date, s.show_time))
+        ]
+
+    # Use first showtime price as display price
+    display_price = showtimes[0]['price'] if showtimes else 120
+
+    return {
+        'id': movie.id,
+        'title': movie.title,
+        'description': movie.description,
+        'genre': movie.genre,
+        'rating': movie.rating,
+        'duration': _format_duration_label(movie.duration),
+        'poster': movie.poster_url,
+        'price': display_price,
+        'release_date': movie.release_date.strftime('%Y-%m') if movie.release_date else '待公布',
+        'showtimes': showtimes,
+    }
+
+
+def seed_cinema_content():
+    """Seed movies, cinema, hall, and showtimes into the database if empty."""
+    if Movie.query.count() > 0:
+        return
+
+    # Create a default cinema and hall
+    cinema = Cinema.query.first()
+    if cinema is None:
+        cinema = Cinema(
+            name='FYP Cinema - Central',
+            location='Central',
+            district='Central',
+            address='123 Queen\'s Road Central, Hong Kong',
+            phone='2317 6666',
+            email='support@fypcinema.test',
+            facilities='{"imax": true, "mx4d": true, "parking": true}'
+        )
+        db.session.add(cinema)
+        db.session.flush()
+
+    hall = Hall.query.first()
+    if hall is None:
+        hall = Hall(
+            cinema_id=cinema.id,
+            name='Hall 1',
+            hall_type='standard',
+            total_seats=120,
+            rows=10,
+            columns=12,
+            is_active=True,
+        )
+        db.session.add(hall)
+        db.session.flush()
+
+    def _create_movie_entries(raw_movies, status):
+        for entry in raw_movies:
+            duration_minutes = _parse_duration_to_minutes(entry.get('duration'))
+            release_date = None
+            if entry.get('release_date'):
+                try:
+                    release_date = datetime.strptime(entry['release_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    try:
+                        release_date = datetime.strptime(entry['release_date'], '%Y-%m').date()
+                    except ValueError:
+                        release_date = None
+
+            movie = Movie(
+                title=entry.get('title'),
+                title_en=entry.get('title_en'),
+                description=entry.get('description'),
+                genre=entry.get('genre'),
+                duration=duration_minutes,
+                release_date=release_date,
+                rating=entry.get('rating'),
+                director=entry.get('director'),
+                cast=entry.get('cast'),
+                poster_url=entry.get('poster'),
+                trailer_url=entry.get('trailer_url'),
+                language=entry.get('language'),
+                status=status,
+            )
+            db.session.add(movie)
+            db.session.flush()
+
+            base_price = entry.get('price', 120)
+            # Create a few showtimes over the next 3 days
+            time_slots = [10, 14, 18, 21]
+            for day_offset in range(0, 3):
+                for hour in time_slots:
+                    st = Showtime(
+                        movie_id=movie.id,
+                        hall_id=hall.id,
+                        show_date=datetime.utcnow().date() + timedelta(days=day_offset),
+                        show_time=datetime.min.time().replace(hour=hour, minute=0),
+                        price=base_price,
+                        available_seats=hall.total_seats,
+                        status='available',
+                    )
+                    db.session.add(st)
+
+    _create_movie_entries(sample_movies.NOW_SHOWING_MOVIES, 'now_showing')
+    _create_movie_entries(sample_movies.COMING_SOON_MOVIES, 'coming_soon')
+
+    db.session.commit()
+
+
+def ensure_default_admin():
+    """Create a default admin account when none exists."""
+    existing_admin = User.query.filter_by(is_admin=True).first()
+    if existing_admin:
+        print(f"[Admin Init] Admin already present: {existing_admin.username}")
+        return
+
+    username = os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin')
+    email = os.environ.get('DEFAULT_ADMIN_EMAIL', 'admin@example.com')
+    password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
+
+    # Avoid collision with a non-admin user who might already have this username
+    collision = User.query.filter_by(username=username).first()
+    if collision:
+        username = f"{username}_admin"
+        email = f"{username}@example.com"
+
+    admin = User(username=username, email=email, is_admin=True)
+    admin.set_password(password)
+    db.session.add(admin)
+    db.session.commit()
+    print(f"[Admin Init] Created default admin '{username}' with password '{password}'")
 
 # Initialize database - add seat_numbers column if it doesn't exist
 def init_seat_numbers_column():
@@ -72,6 +250,8 @@ def init_seat_numbers_column():
 try:
     with app.app_context():
         init_seat_numbers_column()
+        seed_cinema_content()
+        ensure_default_admin()
 except Exception as e:
     print(f"[DB Init] Failed to initialize: {e}")
 
@@ -303,10 +483,32 @@ def admin_login():
 
         next_page = request.args.get("next")
         if not next_page or urlparse(next_page).netloc != "":
-            next_page = url_for('index')
+            next_page = url_for('admin_console')
         return redirect(next_page)
 
     return render_template('admin_login.html.j2', title="Admin Sign In", form=form)
+
+@app.route("/admin")
+@login_required
+def admin_console():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    stats = {
+        'products': Product.query.count(),
+        'categories': Category.query.count(),
+        'tickets': Ticket.query.count(),
+        'movies': Movie.query.count(),
+    }
+
+    return render_template(
+        'admin_console.html.j2',
+        title="Admin Console",
+        stats=stats,
+        now_showing_total=Movie.query.filter_by(status='now_showing').count(),
+        coming_soon_total=Movie.query.filter_by(status='coming_soon').count()
+    )
 
 #for creating admin
 @admin_cli.command('create')
@@ -385,6 +587,8 @@ def update_product(product_id):
 @app.route('/products/delete/<int:product_id>', methods=['POST'])
 @login_required
 def delete_product(product_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Permission denied'}), 403
     product = Product.query.get_or_404(product_id)  # Fetch the product
     db.session.delete(product)  # Delete the product
     db.session.commit()  # Commit the changes to the database
@@ -401,6 +605,9 @@ def view_product(product_id):
 @app.route('/add_category', methods=['GET', 'POST'])
 @login_required  # Ensure only logged-in users can access this
 def add_category():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
     form = CategoryForm()
     if form.validate_on_submit():
         new_category = Category(name=form.name.data)  # Create a new category object
@@ -448,245 +655,139 @@ def edit_product(product_id):
     return render_template('edit_product.html.j2', form=form, product=product, categories=categories)  # Pass categories to template
 
 
-# Helper function to generate random showtimes
-def generate_showtimes(num_shows=4):
-    """Generate random showtimes for a movie"""
-    base_date = datetime.now().date()
-    showtimes = []
-    
-    # Possible time slots (in hours)
-    time_slots = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-    
-    # Randomly select time slots
-    selected_times = random.sample(time_slots, min(num_shows, len(time_slots)))
-    selected_times.sort()
-    
-    for hour in selected_times:
-        # Add random minutes (00, 15, 30, 45)
-        minutes = random.choice([0, 15, 30, 45])
-        showtime = datetime.combine(base_date, datetime.min.time().replace(hour=hour, minute=minutes))
-        showtimes.append(showtime.strftime('%Y-%m-%d %H:%M'))
-    
-    return showtimes
-
-
-# FYP Cinema Routes - 參考 https://www.mclcinema.com/
-movies = [
-    {
-        'id': 1,
-        'title': '創戰紀：戰神降臨 MX4D',
-        'poster': 'https://image.tmdb.org/t/p/w500/c7YAUyfOG4NgZahjnsDWSij4w8T.jpg',
-        'description': '科幻動作大片，體驗 MX4D 震撼效果，進入虛擬世界的終極對決。',
-        'duration': '127 分鐘',
-        'rating': 'IIA',
-        'genre': '科幻 / 動作',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 2,
-        'title': '創戰紀：戰神降臨',
-        'poster': 'https://image.tmdb.org/t/p/w500/c7YAUyfOG4NgZahjnsDWSij4w8T.jpg',
-        'description': '科幻動作史詩，探索數位世界的神秘與危險。',
-        'duration': '127 分鐘',
-        'rating': 'IIA',
-        'genre': '科幻 / 動作',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 3,
-        'title': '一戰再戰',
-        'poster': 'https://image.tmdb.org/t/p/w500/9h2KgGXSmWigNTn3kQdEFFngj9i.jpg',
-        'description': '激烈的戰爭動作片，展現人性與勇氣的極限考驗。',
-        'duration': '135 分鐘',
-        'rating': 'IIB',
-        'genre': '動作 / 戰爭',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 4,
-        'title': 'j-hope Tour HOPE ON THE STAGE THE MOVIE IMAX LASER',
-        'poster': 'https://image.tmdb.org/t/p/w500/aFSQzB3NIeGGGJsRKPi33VGaC6w.jpg',
-        'description': 'BTS j-hope 演唱會電影，IMAX 激光技術呈現最震撼的舞台表演。',
-        'duration': '105 分鐘',
-        'rating': 'I',
-        'genre': '音樂 / 紀錄',
-        'showtimes': generate_showtimes(3)
-    },
-    {
-        'id': 5,
-        'title': '鏈鋸人 - 劇場版：蕾澤篇 MX4D',
-        'poster': 'https://image.tmdb.org/t/p/w500/8WKCjWxKzd4pQGXgVCMGh49E95H.jpg',
-        'description': '人氣動漫電影版，MX4D 體驗更刺激的惡魔獵人戰鬥。',
-        'duration': '95 分鐘',
-        'rating': 'IIB',
-        'genre': '動畫 / 動作',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 6,
-        'title': '鏈鋸人 - 劇場版：蕾澤篇',
-        'poster': 'https://image.tmdb.org/t/p/w500/8WKCjWxKzd4pQGXgVCMGh49E95H.jpg',
-        'description': '熱血動漫改編，惡魔獵人的殘酷與悲壯故事。',
-        'duration': '95 分鐘',
-        'rating': 'IIB',
-        'genre': '動畫 / 動作',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 7,
-        'title': '頭文字D (4K 修復版)',
-        'poster': 'https://image.tmdb.org/t/p/w500/w6RXcE3NpbJjBgDNQwBgaIRp6J5.jpg',
-        'description': '經典港片 4K 重現，再次體驗秋名山的速度與激情。',
-        'duration': '109 分鐘',
-        'rating': 'IIA',
-        'genre': '動作 / 賽車',
-        'showtimes': generate_showtimes(4)
-    },
-    {
-        'id': 8,
-        'title': '觸電',
-        'poster': 'https://image.tmdb.org/t/p/w500/qNbRSEXwG5Z7u2nnI8YqGwSxjkR.jpg',
-        'description': '香港愛情喜劇，笑中帶淚的都市情感故事。',
-        'duration': '98 分鐘',
-        'rating': 'IIA',
-        'genre': '愛情 / 喜劇',
-        'showtimes': generate_showtimes(3)
-    },
-    {
-        'id': 9,
-        'title': '《觸電》特典場',
-        'poster': 'https://image.tmdb.org/t/p/w500/qNbRSEXwG5Z7u2nnI8YqGwSxjkR.jpg',
-        'description': '特別放映場次，包含演員見面會及獨家幕後花絮。',
-        'duration': '120 分鐘',
-        'rating': 'IIA',
-        'genre': '愛情 / 喜劇',
-        'showtimes': generate_showtimes(1)
-    },
-    {
-        'id': 10,
-        'title': '出糧特工隊',
-        'poster': 'https://image.tmdb.org/t/p/w500/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg',
-        'description': '爆笑動作喜劇，打工仔變身特工的荒誕冒險。',
-        'duration': '102 分鐘',
-        'rating': 'IIA',
-        'genre': '喜劇 / 動作',
-        'showtimes': generate_showtimes(4)
-    }
-]
-
-# 即將上映電影
-coming_soon_movies = [
-    {
-        'id': 101,
-        'title': '《劇場版 咒術迴戰 0》- 渋谷事變上映- IMAX Laser',
-        'poster': 'https://image.tmdb.org/t/p/w500/3pTwMUEavTzVOh6yLN0aEwR7uSy.jpg',
-        'description': 'IMAX 激光版本，渋谷事變篇章震撼登場。',
-        'duration': '待公布',
-        'rating': 'IIB',
-        'genre': '動畫 / 動作',
-        'release_date': '2026-01'
-    },
-    {
-        'id': 102,
-        'title': '世外',
-        'poster': 'https://image.tmdb.org/t/p/w500/rjJiBKSLLFqH8pHwGLdRb2vwYEP.jpg',
-        'description': '奇幻冒險電影，探索未知世界的神秘與美麗。',
-        'duration': '待公布',
-        'rating': 'IIA',
-        'genre': '奇幻 / 冒險',
-        'release_date': '2026-02'
-    },
-    {
-        'id': 103,
-        'title': '《藤本樹 17-26》PART.2',
-        'poster': 'https://image.tmdb.org/t/p/w500/wSXgz3PRvAiDkBRXKrJ2Xcd2Wj4.jpg',
-        'description': '藤本樹作品集第二部，集結多部短篇傑作。',
-        'duration': '待公布',
-        'rating': 'IIA',
-        'genre': '動畫 / 劇情',
-        'release_date': '2026-02'
-    },
-    {
-        'id': 104,
-        'title': '迷宮裡的魔術師',
-        'poster': 'https://image.tmdb.org/t/p/w500/xc1dWjZbcVlECL6rMmL5LzVxPFz.jpg',
-        'description': '奇幻冒險動畫，在神秘迷宮中尋找魔法的真諦。',
-        'duration': '待公布',
-        'rating': 'IIA',
-        'genre': '動畫 / 奇幻',
-        'release_date': '2026-03'
-    },
-    {
-        'id': 105,
-        'title': '愛．懺事',
-        'poster': 'https://image.tmdb.org/t/p/w500/kIhVHLj8rXD1RpJcKCVZfGJWRpJ.jpg',
-        'description': '感人愛情劇情片，探討愛與救贖的深刻主題。',
-        'duration': '待公布',
-        'rating': 'IIA',
-        'genre': '愛情 / 劇情',
-        'release_date': '2026-04'
-    }
-]
-
-tickets = []
-
 
 @app.route('/cinema')
 def cinema_index():
-    return render_template('cinema_index.html.j2', movies=movies)
+    movies_db = Movie.query.filter_by(status='now_showing').all()
+    movies_vm = [_movie_view_model(m) for m in movies_db]
+    return render_template('cinema_index.html.j2', movies=movies_vm)
 
 @app.route('/cinema/movie/<int:movie_id>')
 def cinema_movie(movie_id):
-    movie = next((m for m in movies if m['id'] == movie_id), None)
-    if not movie:
-        flash('電影不存在！')
-        return redirect(url_for('cinema_index'))
-    
-    # Calculate price based on duration (1 minute = $1 HK)
-    duration_str = movie.get('duration', '100 分鐘')
-    # Extract number from string like "127 分鐘"
-    import re
-    duration_match = re.search(r'(\d+)', duration_str)
-    if duration_match:
-        duration_minutes = int(duration_match.group(1))
-    else:
-        duration_minutes = 100  # Default fallback
-    
-    movie_with_price = movie.copy()
-    movie_with_price['price'] = duration_minutes
-    
-    return render_template('cinema_movie.html.j2', movie=movie_with_price)
+    movie = Movie.query.get_or_404(movie_id)
+    movie_vm = _movie_view_model(movie, include_showtimes=True)
+    return render_template('cinema_movie.html.j2', movie=movie_vm)
 
 @app.route('/cinema/coming_soon')
 def cinema_coming_soon():
-    return render_template('cinema_coming_soon.html.j2', movies=coming_soon_movies)
+    movies_db = Movie.query.filter_by(status='coming_soon').all()
+    movies_vm = [_movie_view_model(m) for m in movies_db]
+    return render_template('cinema_coming_soon.html.j2', movies=movies_vm)
+
+
+# Admin: manage movies
+@app.route('/admin/movies')
+@login_required
+def admin_movies():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    movies = Movie.query.order_by(Movie.status, Movie.title).all()
+    return render_template('admin_movies.html.j2', movies=movies)
+
+
+@app.route('/admin/movies/create', methods=['POST'])
+@login_required
+def admin_create_movie():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    title = (request.form.get('title') or '').strip()
+    if not title:
+        flash('Title is required for a movie.')
+        return redirect(url_for('admin_movies'))
+
+    genre = request.form.get('genre') or None
+    rating = request.form.get('rating') or None
+    status = request.form.get('status') or 'coming_soon'
+    poster_url = request.form.get('poster_url') or None
+    description = request.form.get('description') or None
+
+    duration = None
+    raw_duration = request.form.get('duration')
+    if raw_duration:
+        try:
+            duration = int(raw_duration)
+        except ValueError:
+            duration = None
+
+    release_date = None
+    raw_release = request.form.get('release_date')
+    if raw_release:
+        try:
+            release_date = datetime.strptime(raw_release, '%Y-%m-%d').date()
+        except ValueError:
+            release_date = None
+
+    movie = Movie(
+        title=title,
+        genre=genre,
+        rating=rating,
+        status=status,
+        poster_url=poster_url,
+        description=description,
+        duration=duration,
+        release_date=release_date,
+    )
+    db.session.add(movie)
+    db.session.commit()
+    flash('Movie created successfully!')
+    return redirect(url_for('admin_movies'))
+
+
+@app.route('/admin/movies/<int:movie_id>', methods=['POST'])
+@login_required
+def admin_update_movie(movie_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Permission denied'}), 403
+
+    movie = Movie.query.get_or_404(movie_id)
+    movie.title = request.form.get('title', movie.title)
+    movie.genre = request.form.get('genre', movie.genre)
+    movie.rating = request.form.get('rating', movie.rating)
+    movie.status = request.form.get('status', movie.status)
+    movie.poster_url = request.form.get('poster_url', movie.poster_url)
+    db.session.commit()
+    flash('Movie updated successfully!')
+    return redirect(url_for('admin_movies'))
+
+
+@app.route('/admin/movies/delete/<int:movie_id>', methods=['POST'])
+@login_required
+def admin_delete_movie(movie_id):
+    if not current_user.is_admin:
+        return jsonify({'message': 'Permission denied'}), 403
+    movie = Movie.query.get_or_404(movie_id)
+    # Clean up related showtimes to avoid NULL foreign keys
+    for st in list(movie.showtimes):
+        db.session.delete(st)
+    db.session.delete(movie)
+    db.session.commit()
+    flash('Movie deleted successfully!')
+    return redirect(url_for('admin_movies'))
 
 @app.route('/cinema/buy_ticket', methods=['POST'])
 @login_required
 def cinema_buy_ticket():
     movie_id = int(request.form['movie_id'])
-    showtime = request.form['showtime']
+    showtime_id = int(request.form['showtime'])
     name = request.form['name']
     email = request.form['email']
     seats = int(request.form['seats'])
     selected_seats = request.form.get('selected_seats', '').strip()  # Get selected seat IDs
     coupon_code = request.form.get('coupon_code', '').strip()  # Get coupon code if provided
     
-    movie = next((m for m in movies if m['id'] == movie_id), None)
-    
-    if not movie:
+    movie = Movie.query.get(movie_id)
+    showtime_obj = Showtime.query.get(showtime_id)
+
+    if not movie or not showtime_obj:
         flash('電影不存在！', 'error')
         return redirect(url_for('cinema_index'))
-    
-    # Calculate price per ticket based on duration (1 minute = $1 HK)
-    import re
-    duration_str = movie.get('duration', '100 分鐘')
-    duration_match = re.search(r'(\d+)', duration_str)
-    if duration_match:
-        price_per_ticket = int(duration_match.group(1))
-    else:
-        price_per_ticket = 100  # Default fallback
-    
+
+    price_per_ticket = showtime_obj.price if showtime_obj else 100
+
     # Calculate base price
     base_price = seats * price_per_ticket
     original_price = base_price
@@ -711,8 +812,8 @@ def cinema_buy_ticket():
     ticket = Ticket(
         user_id=current_user.id,
         movie_id=movie_id,
-        movie_title=movie['title'],
-        showtime=showtime,
+        movie_title=movie.title,
+        showtime=_format_showtime_label(showtime_obj),
         seats=seats,
         seat_numbers=selected_seats if selected_seats else None,
         original_price=original_price,

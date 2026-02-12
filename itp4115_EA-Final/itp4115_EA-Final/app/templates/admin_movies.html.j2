@@ -1,0 +1,83 @@
+{% extends "base.html.j2" %}
+{% block title %}Manage Movies{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <style>
+        .list-shell { display: grid; gap: 14px; }
+        .movie-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: grid; grid-template-columns: 120px 1fr 240px; gap: 12px; align-items: center; }
+        .movie-card img { width: 100%; border-radius: 10px; border: 1px solid var(--border); aspect-ratio: 2/3; object-fit: cover; background: #0c0c0c; }
+        .movie-meta { display: grid; gap: 6px; }
+        .badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pill { padding: 6px 10px; border-radius: 10px; background: rgba(246,208,0,0.15); color: #f6d000; border: 1px solid rgba(246,208,0,0.35); font-weight: 700; }
+        .pill-ghost { padding: 6px 10px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
+        .form-inline { display: grid; gap: 6px; }
+        .form-inline input, .form-inline select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
+        .actions { display: flex; gap: 8px; }
+        .create-card { background: var(--panel); border: 1px dashed var(--border); border-radius: 14px; padding: 16px; display: grid; gap: 8px; margin-bottom: 16px; }
+        .create-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .create-grid input, .create-grid select, .create-grid textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
+        .create-grid textarea { min-height: 80px; }
+        @media (max-width: 980px) { .movie-card { grid-template-columns: 1fr; } }
+    </style>
+
+    <h1 style="margin-bottom:16px;">電影管理</h1>
+    <p style="color: var(--muted);">編輯基本資料、調整上映狀態，或刪除電影。</p>
+
+    <div class="create-card">
+        <h3 style="margin:0;">新增電影</h3>
+        <form method="post" action="{{ url_for('admin_create_movie') }}">
+            <div class="create-grid">
+                <input type="text" name="title" placeholder="標題 (必填)" required>
+                <input type="text" name="genre" placeholder="類型，例如 劇情 / 動作">
+                <input type="text" name="rating" placeholder="級別，例如 IIB / IIA">
+                <select name="status">
+                    <option value="now_showing">Now Showing</option>
+                    <option value="coming_soon" selected>Coming Soon</option>
+                    <option value="ended">Ended</option>
+                </select>
+                <input type="number" name="duration" placeholder="片長（分鐘）" min="0">
+                <input type="text" name="release_date" placeholder="上映日期 YYYY-MM-DD">
+                <input type="text" name="poster_url" placeholder="Poster URL">
+            </div>
+            <textarea name="description" placeholder="簡介"></textarea>
+            <button class="btn btn-primary" type="submit">建立電影</button>
+        </form>
+    </div>
+
+    <div class="list-shell">
+        {% for movie in movies %}
+        <div class="movie-card">
+            <img src="{{ movie.poster_url or 'https://via.placeholder.com/300x450?text=Poster' }}" alt="{{ movie.title }}">
+            <div class="movie-meta">
+                <div style="font-weight:800; font-size:18px;">{{ movie.title }}</div>
+                <div class="badge-row">
+                    <span class="pill">{{ movie.status }}</span>
+                    {% if movie.genre %}<span class="pill-ghost">{{ movie.genre }}</span>{% endif %}
+                    {% if movie.rating %}<span class="pill-ghost">{{ movie.rating }}</span>{% endif %}
+                </div>
+                {% if movie.description %}<div style="color: var(--muted); line-height:1.4; max-width: 640px;">{{ movie.description }}</div>{% endif %}
+            </div>
+            <form class="form-inline" method="post" action="{{ url_for('admin_update_movie', movie_id=movie.id) }}">
+                <input type="text" name="title" value="{{ movie.title }}" placeholder="Title" required>
+                <input type="text" name="genre" value="{{ movie.genre or '' }}" placeholder="Genre">
+                <input type="text" name="rating" value="{{ movie.rating or '' }}" placeholder="Rating (e.g. IIB)">
+                <select name="status">
+                    <option value="now_showing" {% if movie.status == 'now_showing' %}selected{% endif %}>Now Showing</option>
+                    <option value="coming_soon" {% if movie.status == 'coming_soon' %}selected{% endif %}>Coming Soon</option>
+                    <option value="ended" {% if movie.status == 'ended' %}selected{% endif %}>Ended</option>
+                </select>
+                <input type="text" name="poster_url" value="{{ movie.poster_url or '' }}" placeholder="Poster URL">
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+            </form>
+            <form method="post" action="{{ url_for('admin_delete_movie', movie_id=movie.id) }}" onsubmit="return confirm('確定要刪除這部電影嗎？');">
+                <button class="btn btn-ghost" type="submit">刪除</button>
+            </form>
+        </div>
+        {% else %}
+        <p>暫時沒有電影記錄。</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

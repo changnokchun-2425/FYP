@@ -1,1079 +1,403 @@
-{# ========================================
-   MOVIE DETAIL PAGE
-   ========================================
-   Purpose: Display individual movie information and booking form
-   Features:
-   - Movie poster and details
-   - Showtime selection
-   - Ticket booking form
-   - Price calculation
-   - Login required for booking
-======================================== #}
-
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ movie.title }} - FYP Cinema</title>
-    <style>
-        /* ========== GLOBAL RESET ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
-            background-color: #0a0a0a;
-            color: #ffffff;
-            line-height: 1.6;
-        }
-
-        header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        /* ========== FLASH MESSAGES ========== */
-        .flash-messages {
-            max-width: 1200px;
-            margin: 1rem auto;
-            padding: 0 2rem;
-        }
-
-        .alert {
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
-            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #27ae60, #229954);
-            color: #fff;
-            border-left: 5px solid #1e8449;
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: #fff;
-            border-left: 5px solid #a93226;
-        }
-
-        .alert.fade-out {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        main {
-            max-width: 1400px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-        }
-
-        .movie-detail {
-            display: flex;
-            gap: 3rem;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .poster-section {
-            flex-shrink: 0;
-            position: sticky;
-            top: 2rem;
-            align-self: flex-start;
-            height: fit-content;
-        }
-
-        .movie-detail img {
-            width: 350px;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-            display: block;
-        }
-
-        .detail-info {
-            flex: 1;
-        }
-
-        .detail-info h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(90deg, #e50914, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .movie-meta {
-            display: flex;
-            gap: 1.5rem;
-            margin: 1rem 0;
-            font-size: 1rem;
-        }
-
-        .movie-meta span {
-            background-color: #333;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .detail-info p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #ddd;
-            margin-bottom: 2rem;
-        }
-
-        /* ========== BOOKING FORM STYLES ========== */
-        .booking-form {
-            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
-            padding: 3rem;
-            border-radius: 15px;
-            margin-top: 2rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            border: 1px solid #333;
-            width: 100%;
-        }
-
-        .booking-form h3 {
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            color: #e50914;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .booking-form label {
-            display: block;
-            margin-top: 1.5rem;
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #fff;
-        }
-
-        .booking-form input,
-        .booking-form select {
-            width: 100%;
-            padding: 1.2rem;
-            margin-top: 0.5rem;
-            border: 2px solid #444;
-            border-radius: 8px;
-            background-color: #1a1a1a;
-            color: white;
-            font-size: 1.05rem;
-            transition: border-color 0.3s;
-        }
-
-        .booking-form input:focus,
-        .booking-form select:focus {
-            outline: none;
-            border-color: #e50914;
-        }
-
-        .booking-form button {
-            width: 100%;
-            margin-top: 2rem;
-            background: linear-gradient(135deg, #e50914, #b20710);
-            color: white;
-            padding: 1.4rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
-        }
-
-        .booking-form button:hover {
-            background: linear-gradient(135deg, #ff1a24, #e50914);
-            box-shadow: 0 6px 16px rgba(229, 9, 20, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .price-info {
-            background-color: #1a1a1a;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-top: 1.5rem;
-            border-left: 4px solid #e50914;
-        }
-
-        .price-info p {
-            margin: 0.8rem 0;
-            font-size: 1.1rem;
-        }
-
-        /* ========== COUPON SECTION STYLES ========== */
-        .coupon-section {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: linear-gradient(135deg, rgba(30, 60, 114, 0.3), rgba(42, 82, 152, 0.3));
-            border-radius: 10px;
-            border: 2px dashed #2a5298;
-        }
-
-        .coupon-section h4 {
-            color: #4CAF50;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-
-        .coupon-select-wrapper {
-            position: relative;
-        }
-
-        .coupon-select-wrapper select {
-            padding-right: 3rem;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e50914' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            appearance: none;
-        }
-
-        .coupon-info {
-            margin-top: 1rem;
-            padding: 1rem;
-            background-color: rgba(76, 175, 80, 0.1);
-            border-radius: 8px;
-            border-left: 4px solid #4CAF50;
-            display: none;
-        }
-
-        .coupon-info.active {
-            display: block;
-        }
-
-        .coupon-info p {
-            margin: 0.3rem 0;
-            color: #81c784;
-            font-size: 0.95rem;
-        }
-
-        .discount-row {
-            color: #4CAF50 !important;
-            font-weight: bold;
-        }
-
-        .btn-validate {
-            margin-top: 0.8rem;
-            padding: 0.7rem 1.5rem;
-            background: linear-gradient(135deg, #4CAF50, #388E3C);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .btn-validate:hover {
-            background: linear-gradient(135deg, #66BB6A, #4CAF50);
-            transform: translateY(-1px);
-        }
-
-        .coupon-badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            background-color: #e50914;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-left: 0.5rem;
-            font-weight: bold;
-        }
-
-        /* ========== SEAT SELECTION STYLES ========== */
-        .seat-selection {
-            margin-top: 2rem;
-            padding: 2rem;
-            background: linear-gradient(135deg, rgba(30, 60, 114, 0.3), rgba(42, 82, 152, 0.3));
-            border-radius: 15px;
-            border: 2px solid #2a5298;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .seat-selection h4 {
-            color: #4CAF50;
-            margin-bottom: 1.5rem;
-            font-size: 1.3rem;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .cinema-screen {
-            background: linear-gradient(135deg, #444, #666);
-            color: #fff;
-            text-align: center;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            margin-bottom: 2.5rem;
-            font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-            border: 2px solid #888;
-            position: relative;
-        }
-
-        .cinema-screen::before {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 10%;
-            right: 10%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #888, transparent);
-        }
-
-        .seat-map {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 1.5rem 0;
-        }
-
-        .seat-row {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .seat-row-label {
-            width: 30px;
-            text-align: center;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .seat {
-            width: 38px;
-            height: 38px;
-            border: 2px solid #4CAF50;
-            border-radius: 8px 8px 2px 2px;
-            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            cursor: pointer;
-            transition: all 0.25s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            color: #888;
-            font-weight: 500;
-            position: relative;
-        }
-
-        .seat::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background-color: rgba(76, 175, 80, 0.3);
-        }
-
-        .seat:hover:not(.occupied):not(.selected) {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            transform: scale(1.15) translateY(-2px);
-            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
-            color: #fff;
-            border-color: #66BB6A;
-        }
-
-        .seat.selected {
-            background: linear-gradient(135deg, #e50914, #c40812);
-            border-color: #ff1a24;
-            color: #fff;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(229, 9, 20, 0.4);
-        }
-
-        .seat.selected::after {
-            background-color: rgba(229, 9, 20, 0.5);
-        }
-
-        .seat.occupied {
-            background: linear-gradient(135deg, #555, #444);
-            border-color: #666;
-            cursor: not-allowed;
-            opacity: 0.4;
-            color: #666;
-        }
-
-        .seat.occupied::after {
-            background-color: transparent;
-        }
-
-        .seat-legend {
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #ddd;
-        }
-
-        .legend-box {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
-            border: 2px solid;
-        }
-
-        .legend-available {
-            background-color: #2a2a2a;
-            border-color: #4CAF50;
-        }
-
-        .legend-selected {
-            background-color: #e50914;
-            border-color: #e50914;
-        }
-
-        .legend-occupied {
-            background-color: #555;
-            border-color: #777;
-            opacity: 0.5;
-        }
-
-        .selected-seats-display {
-            margin-top: 1.5rem;
-            padding: 1.2rem 1.5rem;
-            background: linear-gradient(135deg, rgba(229, 9, 20, 0.15), rgba(229, 9, 20, 0.08));
-            border-radius: 10px;
-            border: 2px solid #e50914;
-            box-shadow: 0 2px 8px rgba(229, 9, 20, 0.2);
-        }
-
-        .selected-seats-display p {
-            margin: 0.5rem 0;
-            color: #fff;
-            font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .selected-seats-display strong {
-            color: #fff;
-            opacity: 0.9;
-        }
-
-        .selected-seats-list {
-            color: #4CAF50;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        footer {
-            background-color: #0a0a0a;
-            text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
-            border-top: 2px solid #2a5298;
-        }
-
-        footer p {
-            color: #888;
-        }
-
-        @media (max-width: 768px) {
-            .movie-detail {
-                flex-direction: column;
-                padding: 2rem;
-            }
-
-            .poster-section {
-                position: static;
-            }
-            
-            .movie-detail img {
-                width: 100%;
-            }
-
-            .back-link {
-                position: static;
-                display: block;
-                margin-bottom: 1rem;
-                transform: none;
-                text-align: center;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .detail-info h2 {
-                font-size: 2rem;
-            }
-
-            .seat {
-                width: 32px;
-                height: 32px;
-                font-size: 0.65rem;
-            }
-
-            .seat-row-label {
-                width: 25px;
-                font-size: 0.9rem;
-            }
-
-            .seat-selection {
-                padding: 1rem;
-            }
-
-            .cinema-screen {
-                font-size: 0.95rem;
-                padding: 0.8rem 1rem;
-            }
-
-            .seat-legend {
-                gap: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>🎬 FYP Cinema</h1>
-    </header>
-
-    <nav style="background-color: #1a1a1a; padding: 1rem; text-align: center; border-bottom: 2px solid #2a5298;">
-        <a href="{{ url_for('cinema_index') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🎬 現正熱映</a>
-        <a href="{{ url_for('cinema_coming_soon') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">📅 即將上映</a>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('profile') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">👤 個人中心</a>
-        <a href="{{ url_for('logout') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🚪 登出</a>
-        {% else %}
-        <a href="{{ url_for('login') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">🔑 登入</a>
-        <a href="{{ url_for('register') }}" style="color: #ffffff; text-decoration: none; margin: 0 1.5rem; font-size: 1.1rem; transition: color 0.3s;">✨ 註冊</a>
-        {% endif %}
-    </nav>
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    
-    <main>
-        <div class="movie-detail">
-            <div class="poster-section">
-                <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/400x600?text=MCL+Cinema'">
-            </div>
-            <div class="detail-info">
-                <h2>{{ movie.title }}</h2>
-                <div class="movie-meta">
-                    <span>⏱️ {{ movie.duration }}</span>
-                    <span>📊 {{ movie.rating }}</span>
-                    <span>🎬 {{ movie.genre }}</span>
-                </div>
-                <p>{{ movie.description }}</p>
-                
-                <div class="booking-form">
-                    <h3>🎟️ 購票資訊</h3>
-                    {% if current_user.is_authenticated %}
-                    <form method="post" action="{{ url_for('cinema_buy_ticket') }}" id="bookingForm">
-                        <input type="hidden" name="movie_id" value="{{ movie.id }}">
-                        
-                        <label for="showtime">選擇場次：</label>
-                        <select name="showtime" id="showtime" required onchange="loadSeats()">
-                            <option value="">請選擇場次</option>
-                            {% for time in movie.showtimes %}
-                            <option value="{{ time }}">{{ time }}</option>
-                            {% endfor %}
-                        </select>
-                        
-                        <!-- ========================================
-                             SEAT SELECTION SECTION
-                        ======================================== -->
-                        <div class="seat-selection" id="seatSelection" style="display: none;">
-                            <h4>🎭 選擇座位</h4>
-                            
-                            <div class="cinema-screen">
-                                🎬 銀幕 SCREEN 🎬
-                            </div>
-                            
-                            <div class="seat-map" id="seatMap">
-                                <!-- Seats will be generated here -->
-                            </div>
-                            
-                            <div class="seat-legend">
-                                <div class="legend-item">
-                                    <div class="legend-box legend-available"></div>
-                                    <span>可選座位</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-box legend-selected"></div>
-                                    <span>已選座位</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-box legend-occupied"></div>
-                                    <span>已售出</span>
-                                </div>
-                            </div>
-                            
-                            <div class="selected-seats-display" id="selectedSeatsDisplay" style="display: none;">
-                                <p><strong>已選座位：</strong><span class="selected-seats-list" id="selectedSeatsList"></span></p>
-                                <p><strong>座位數量：</strong><span id="selectedSeatsCount">0</span> 個</p>
-                            </div>
-                            
-                            <input type="hidden" name="selected_seats" id="selected_seats" value="">
-                        </div>
-                        
-                        <label for="name">姓名：</label>
-                        <input type="text" name="name" id="name" placeholder="請輸入您的姓名" value="{{ current_user.username }}" required>
-                        
-                        <label for="email">電郵：</label>
-                        <input type="email" name="email" id="email" placeholder="example@email.com" value="{{ current_user.email }}" required>
-                        
-                        <input type="hidden" name="seats" id="seats" value="1">
-                        
-                        <!-- ========================================
-                             COUPON SELECTION SECTION
-                        ======================================== -->
-                        <div class="coupon-section">
-                            <h4>🎫 優惠券 (可選)</h4>
-                            
-                            <div class="coupon-select-wrapper">
-                                <label for="coupon_code">選擇優惠券：</label>
-                                <select name="coupon_code" id="coupon_code" onchange="applyCoupon()">
-                                    <option value="">不使用優惠券</option>
-                                    <option value="manual">手動輸入優惠券代碼</option>
-                                    <optgroup label="我的優惠券" id="userCouponsGroup">
-                                        <!-- User coupons will be loaded here via JavaScript -->
-                                    </optgroup>
-                                </select>
-                            </div>
-                            
-                            <!-- Manual coupon input (hidden by default) -->
-                            <div id="manualCouponInput" style="display: none; margin-top: 1rem;">
-                                <label for="manual_coupon_code">輸入優惠券代碼：</label>
-                                <input type="text" id="manual_coupon_code" placeholder="例如: WELCOME-ABC123" style="text-transform: uppercase;">
-                                <button type="button" class="btn-validate" onclick="validateManualCoupon()">✓ 驗證優惠券</button>
-                            </div>
-                            
-                            <!-- Coupon info display -->
-                            <div id="couponInfo" class="coupon-info">
-                                <p id="couponName">📌 <strong>優惠券名稱：</strong><span></span></p>
-                                <p id="couponDiscount">💰 <strong>折扣：</strong><span></span></p>
-                                <p id="couponExpiry">📅 <strong>有效期至：</strong><span></span></p>
-                            </div>
-                        </div>
-                        
-                        <div class="price-info">
-                            <p><strong>票價：</strong>HK$<span id="pricePerSeat">{{ movie.price }}</span> / 張</p>
-                            <p id="originalPrice" style="display: none;"><strong>原價：</strong>HK$<span>{{ movie.price }}</span></p>
-                            <p id="discountAmount" style="display: none;" class="discount-row"><strong>優惠：</strong>-HK$<span>0</span></p>
-                            <p id="totalPrice"><strong>總計：</strong>HK$<span>{{ movie.price }}</span></p>
-                        </div>
-                        
-                        <button type="submit">🎫 確認購票</button>
-                    </form>
-                    {% else %}
-                    <div style="text-align: center; padding: 2rem; background: rgba(229, 9, 20, 0.1); border-radius: 10px; border: 2px solid #e50914;">
-                        <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ 請先登入以購買電影票</p>
-                        <a href="{{ url_for('login', next=request.path) }}" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #e50914 0%, #c40812 100%); color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                            前往登入
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+{% extends "base.html.j2" %}
+{% block title %}{{ movie.title }} - FYP Cinema{% endblock %}
+{% block content %}
+{% set fallback_poster = movie.poster or 'https://storage.movie6.com/movie/118ca_1_1770188030.jpg' %}
+<style>
+    .hero { position: relative; overflow: hidden; border-radius: 18px; border: 1px solid var(--border); background: #080808; margin-top: 16px; }
+    .hero-bg { position: absolute; inset: 0; background: linear-gradient(120deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('{{ fallback_poster }}') center/cover no-repeat; filter: blur(8px) brightness(0.6); transform: scale(1.1); }
+    .hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.35) 100%); }
+    .hero-content { position: relative; display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding: 28px; align-items: center; }
+    .poster-card { position: relative; }
+    .poster-card img { width: 100%; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 12px 32px rgba(0,0,0,0.6); object-fit: cover; aspect-ratio: 2/3; background: #0c0c0c; }
+    .poster-badges { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill-ghost { padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.12); color: #f7f7f7; font-weight: 700; letter-spacing: 0.2px; }
+    .hero-copy { display: flex; flex-direction: column; gap: 14px; color: #fafafa; }
+    .eyebrow { color: #f6d000; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; }
+    .hero-title { margin: 0; font-size: 34px; font-weight: 900; letter-spacing: 0.3px; }
+    .hero-desc { margin: 0; color: #d6d6d6; line-height: 1.6; max-width: 720px; }
+    .meta-line { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { padding: 8px 12px; border-radius: 12px; background: rgba(246,208,0,0.15); color: #f6d000; border: 1px solid rgba(246,208,0,0.35); font-weight: 800; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .btn-ghost-strong { padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); color: #fff; font-weight: 700; background: rgba(255,255,255,0.05); }
+    .detail-shell { margin-top: 18px; display: grid; grid-template-columns: 1fr 420px; gap: 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+    .panel h3 { margin: 0 0 10px 0; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .info-card { padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
+    .info-label { color: var(--muted); font-size: 12px; letter-spacing: 0.3px; text-transform: uppercase; }
+    .info-value { color: var(--text); font-weight: 800; font-size: 15px; }
+    label { display: block; margin: 12px 0 6px 0; color: var(--text); font-weight: 700; }
+    select, input[type="text"], input[type="email"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+    }
+    .showtime-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+    .showtime-pill { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text); display: inline-flex; gap: 6px; align-items: center; }
+    .seat-selection { margin-top: 14px; }
+    .cinema-screen { text-align: center; padding: 10px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); }
+    .seat-map { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .seat-row { display: grid; grid-template-columns: 28px repeat(10, 1fr); gap: 6px; align-items: center; }
+    .seat-row-label { text-align: center; color: var(--muted); font-weight: 700; }
+    .seat { padding: 8px 0; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); text-align: center; cursor: pointer; }
+    .seat.selected { background: var(--primary); color: #0b0b0b; font-weight: 800; }
+    .seat.occupied { background: #2a2a2a; color: #777; cursor: not-allowed; }
+    .seat-legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; color: var(--muted); }
+    .legend-item { display: flex; gap: 6px; align-items: center; }
+    .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--border); }
+    .legend-available { background: var(--panel-2); }
+    .legend-selected { background: var(--primary); border-color: var(--primary); }
+    .legend-occupied { background: #2a2a2a; }
+    .selected-seats-display { margin-top: 10px; padding: 10px; border-radius: 10px; background: var(--panel-2); color: var(--text); }
+    .price-info { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(246,208,0,0.06); border: 1px solid var(--border); }
+    .coupon-section { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(246,208,0,0.08); border: 1px dashed var(--primary); }
+    .coupon-info { display: none; margin-top: 8px; padding: 10px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); }
+    .coupon-info.active { display: block; }
+    .action-row { display: flex; gap: 10px; margin-top: 14px; }
+    .note-box { margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px dashed var(--border); color: var(--muted); }
+    @media (max-width: 1080px) { .hero-content { grid-template-columns: 260px 1fr; } }
+    @media (max-width: 820px) {
+        .hero-content { grid-template-columns: 1fr; }
+        .poster-card { max-width: 280px; }
+        .detail-shell { grid-template-columns: 1fr; }
+    }
+</style>
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <div class="poster-card">
+            <img src="{{ fallback_poster }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/400x600?text=FYP+Cinema'">
+            <div class="poster-badges">
+                <span class="pill-ghost">{{ movie.rating or 'IIB' }}</span>
+                <span class="pill-ghost">{{ movie.duration }}</span>
+                {% if movie.genre %}<span class="pill-ghost">{{ movie.genre }}</span>{% endif %}
+                {% if movie.release_date %}<span class="pill-ghost">上映 {{ movie.release_date }}</span>{% endif %}
             </div>
         </div>
-    </main>
-    
-    <footer>
-        <p>&copy; 2025 FYP Cinema. All rights reserved. | 香港首選電影院線</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9rem;">客戶服務熱線: 2317 6666</p>
-    </footer>
+        <div class="hero-copy">
+            <div class="eyebrow">m6 screening 61 • 特別場</div>
+            <h1 class="hero-title">{{ movie.title }}</h1>
+            <p class="hero-desc">{{ movie.description }}</p>
+            <div class="meta-line">
+                <span class="pill">HK${{ movie.price }} / 張</span>
+                <span class="pill">🎟️ 映後謝票場</span>
+                <span class="pill">🎁 限定收藏卡</span>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#booking">立即購票</a>
+                <span class="btn-ghost-strong">安全交易 • 即時確認</span>
+            </div>
+        </div>
+    </div>
+</section>
 
-    <!-- ========================================
-         JAVASCRIPT - Price Calculator & Coupon Handler
-    ======================================== -->
-    <script>
-        // Store available coupons and current discount
-        let availableCoupons = [];
-        let currentDiscount = 0;
-        let currentCouponCode = '';
-        
-        // Seat selection variables
-        let selectedSeats = [];
-        const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        const SEATS_PER_ROW = 10;
-        const occupiedSeats = []; // Simulated occupied seats - in production, fetch from backend
-        
-        /* Load user's available coupons on page load */
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadUserCoupons();
-            // Randomly generate some occupied seats for demo
-            for (let i = 0; i < 15; i++) {
-                const row = ROWS[Math.floor(Math.random() * ROWS.length)];
-                const num = Math.floor(Math.random() * SEATS_PER_ROW) + 1;
-                const seatId = `${row}${num}`;
-                if (!occupiedSeats.includes(seatId)) {
-                    occupiedSeats.push(seatId);
+<section class="detail-shell">
+    <div class="panel">
+        <h3>放映資訊</h3>
+        <div class="info-grid">
+            <div class="info-card"><div class="info-label">上映日期</div><div class="info-value">{{ movie.release_date or '待公布' }}</div></div>
+            <div class="info-card"><div class="info-label">片長</div><div class="info-value">{{ movie.duration }}</div></div>
+            <div class="info-card"><div class="info-label">級別</div><div class="info-value">{{ movie.rating or 'IIB' }}</div></div>
+            <div class="info-card"><div class="info-label">票價</div><div class="info-value">HK${{ movie.price }}</div></div>
+        </div>
+        <div style="margin-top:14px; color: var(--text); line-height:1.6;">{{ movie.description }}</div>
+
+        <h4 style="margin-top:18px; margin-bottom:8px;">場次</h4>
+        <div class="showtime-pills">
+            {% for st in movie.showtimes %}
+                <span class="showtime-pill">🕒 {{ st.label }} <span style="color:#f6d000; font-weight:800;">HK${{ st.price }}</span></span>
+            {% endfor %}
+        </div>
+
+        <div class="note-box">到場換領實體票及收藏卡，請提前 15 分鐘到場。</div>
+    </div>
+
+    <div class="panel" id="booking">
+        <h3>購票</h3>
+        {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('cinema_buy_ticket') }}" id="bookingForm">
+            <input type="hidden" name="movie_id" value="{{ movie.id }}">
+
+            <label for="showtime">選擇場次</label>
+            <select name="showtime" id="showtime" required onchange="loadSeats()">
+                <option value="">請選擇場次</option>
+                {% for st in movie.showtimes %}
+                <option value="{{ st.id }}">{{ st.label }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="seat-selection" id="seatSelection" style="display:none;">
+                <div class="cinema-screen">SCREEN</div>
+                <div class="seat-map" id="seatMap"></div>
+                <div class="seat-legend">
+                    <div class="legend-item"><div class="legend-box legend-available"></div><span>可選</span></div>
+                    <div class="legend-item"><div class="legend-box legend-selected"></div><span>已選</span></div>
+                    <div class="legend-item"><div class="legend-box legend-occupied"></div><span>已售</span></div>
+                </div>
+                <div class="selected-seats-display" id="selectedSeatsDisplay" style="display:none;">
+                    <p><strong>已選：</strong><span id="selectedSeatsList"></span></p>
+                    <p><strong>數量：</strong><span id="selectedSeatsCount">0</span> 張</p>
+                </div>
+                <input type="hidden" name="selected_seats" id="selected_seats" value="">
+            </div>
+
+            <label for="name">姓名</label>
+            <input type="text" name="name" id="name" value="{{ current_user.username }}" required>
+
+            <label for="email">電郵</label>
+            <input type="email" name="email" id="email" value="{{ current_user.email }}" required>
+
+            <input type="hidden" name="seats" id="seats" value="1">
+
+            <div class="coupon-section">
+                <h4 style="margin:0 0 8px 0;">優惠券 (可選)</h4>
+                <label for="coupon_code">選擇優惠券</label>
+                <select name="coupon_code" id="coupon_code" onchange="applyCoupon()">
+                    <option value="">不使用</option>
+                    <option value="manual">手動輸入</option>
+                    <optgroup label="我的優惠券" id="userCouponsGroup"></optgroup>
+                </select>
+                <div id="manualCouponInput" style="display:none; margin-top:8px;">
+                    <input type="text" id="manual_coupon_code" placeholder="輸入優惠券" style="text-transform: uppercase;">
+                    <div class="action-row">
+                        <button type="button" class="btn btn-primary" onclick="validateManualCoupon()">驗證</button>
+                    </div>
+                </div>
+                <div id="couponInfo" class="coupon-info">
+                    <p id="couponName">📌 優惠券：<span></span></p>
+                    <p id="couponDiscount">💰 折扣：<span></span></p>
+                    <p id="couponExpiry">📅 到期：<span></span></p>
+                </div>
+            </div>
+
+            <div class="price-info">
+                <p><strong>票價：</strong>HK$<span id="pricePerSeat">{{ movie.price }}</span> / 張</p>
+                <p id="originalPrice" style="display:none;"><strong>原價：</strong>HK$<span>{{ movie.price }}</span></p>
+                <p id="discountAmount" style="display:none;"><strong>優惠：</strong>-HK$<span>0</span></p>
+                <p id="totalPrice"><strong>總計：</strong>HK$<span>{{ movie.price }}</span></p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:12px;">🎫 確認購票</button>
+        </form>
+        {% else %}
+        <div style="text-align:center; padding:16px; background: var(--panel-2); border-radius: 12px; border:1px solid var(--border);">
+            <p style="margin:0 0 12px 0;">請先登入以購票</p>
+            <a class="btn btn-primary" href="{{ url_for('login', next=request.path) }}">前往登入</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+    // Coupon and seat selection logic (ported from previous template)
+    let availableCoupons = [];
+    let currentDiscount = 0;
+    let currentCouponCode = '';
+    let selectedSeats = [];
+    const ROWS = ['A','B','C','D','E','F','G','H'];
+    const SEATS_PER_ROW = 10;
+    const occupiedSeats = [];
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadUserCoupons();
+        updatePrice();
+    });
+
+    function loadSeats() {
+        const showtime = document.getElementById('showtime').value;
+        const seatSelection = document.getElementById('seatSelection');
+        const seatMap = document.getElementById('seatMap');
+        if (!showtime) { seatSelection.style.display = 'none'; return; }
+        selectedSeats = [];
+        updateSelectedSeatsDisplay();
+        seatSelection.style.display = 'block';
+        seatMap.innerHTML = '';
+        ROWS.forEach(row => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'seat-row';
+            const label = document.createElement('div');
+            label.className = 'seat-row-label';
+            label.textContent = row;
+            rowDiv.appendChild(label);
+            for (let i = 1; i <= SEATS_PER_ROW; i++) {
+                const seatId = `${row}${i}`;
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                seat.dataset.seatId = seatId;
+                seat.textContent = i;
+                if (occupiedSeats.includes(seatId)) {
+                    seat.classList.add('occupied');
+                } else {
+                    seat.onclick = () => toggleSeat(seatId);
                 }
+                rowDiv.appendChild(seat);
             }
+            seatMap.appendChild(rowDiv);
         });
-        
-        /* Load seat map when showtime is selected */
-        function loadSeats() {
-            const showtime = document.getElementById('showtime').value;
-            const seatSelection = document.getElementById('seatSelection');
-            const seatMap = document.getElementById('seatMap');
-            
-            if (!showtime) {
-                seatSelection.style.display = 'none';
-                return;
-            }
-            
-            // Clear previous selections
-            selectedSeats = [];
-            updateSelectedSeatsDisplay();
-            
-            // Show seat selection
-            seatSelection.style.display = 'block';
-            
-            // Generate seat map
-            seatMap.innerHTML = '';
-            ROWS.forEach(row => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'seat-row';
-                
-                // Add row label
-                const label = document.createElement('div');
-                label.className = 'seat-row-label';
-                label.textContent = row;
-                rowDiv.appendChild(label);
-                
-                // Add seats
-                for (let i = 1; i <= SEATS_PER_ROW; i++) {
-                    const seatId = `${row}${i}`;
-                    const seat = document.createElement('div');
-                    seat.className = 'seat';
-                    seat.dataset.seatId = seatId;
-                    seat.textContent = i;
-                    
-                    if (occupiedSeats.includes(seatId)) {
-                        seat.classList.add('occupied');
-                    } else {
-                        seat.onclick = () => toggleSeat(seatId);
-                    }
-                    
-                    rowDiv.appendChild(seat);
-                }
-                
-                seatMap.appendChild(rowDiv);
-            });
+    }
+
+    function toggleSeat(seatId) {
+        const seatElement = document.querySelector(`[data-seat-id="${seatId}"]`);
+        if (selectedSeats.includes(seatId)) {
+            selectedSeats = selectedSeats.filter(s => s !== seatId);
+            seatElement.classList.remove('selected');
+        } else {
+            if (selectedSeats.length >= 10) { alert('最多只能選擇10個座位'); return; }
+            selectedSeats.push(seatId);
+            seatElement.classList.add('selected');
         }
-        
-        /* Toggle seat selection */
-        function toggleSeat(seatId) {
-            const seatElement = document.querySelector(`[data-seat-id="${seatId}"]`);
-            
-            if (selectedSeats.includes(seatId)) {
-                // Deselect
-                selectedSeats = selectedSeats.filter(s => s !== seatId);
-                seatElement.classList.remove('selected');
-            } else {
-                // Select (max 10 seats)
-                if (selectedSeats.length >= 10) {
-                    alert('最多只能選擇10個座位');
-                    return;
-                }
-                selectedSeats.push(seatId);
-                seatElement.classList.add('selected');
-            }
-            
-            updateSelectedSeatsDisplay();
+        updateSelectedSeatsDisplay();
+    }
+
+    function updateSelectedSeatsDisplay() {
+        const display = document.getElementById('selectedSeatsDisplay');
+        const list = document.getElementById('selectedSeatsList');
+        const count = document.getElementById('selectedSeatsCount');
+        const seatsInput = document.getElementById('seats');
+        const selectedSeatsInput = document.getElementById('selected_seats');
+        if (selectedSeats.length > 0) {
+            display.style.display = 'block';
+            list.textContent = selectedSeats.sort().join(', ');
+            count.textContent = selectedSeats.length;
+            seatsInput.value = selectedSeats.length;
+            selectedSeatsInput.value = selectedSeats.join(',');
+        } else {
+            display.style.display = 'none';
+            seatsInput.value = 1;
+            selectedSeatsInput.value = '';
         }
-        
-        /* Update selected seats display and price */
-        function updateSelectedSeatsDisplay() {
-            const display = document.getElementById('selectedSeatsDisplay');
-            const list = document.getElementById('selectedSeatsList');
-            const count = document.getElementById('selectedSeatsCount');
-            const seatsInput = document.getElementById('seats');
-            const selectedSeatsInput = document.getElementById('selected_seats');
-            
-            if (selectedSeats.length > 0) {
-                display.style.display = 'block';
-                list.textContent = selectedSeats.sort().join(', ');
-                count.textContent = selectedSeats.length;
-                seatsInput.value = selectedSeats.length;
-                selectedSeatsInput.value = selectedSeats.join(',');
-            } else {
-                display.style.display = 'none';
-                seatsInput.value = 1;
-                selectedSeatsInput.value = '';
-            }
-            
-            updatePrice();
-        }
-        
-        /* Fetch user's coupons from API */
-        async function loadUserCoupons() {
-            try {
-                const response = await fetch('/api/get_user_coupons');
-                
-                if (!response.ok) {
-                    console.error('Failed to fetch coupons:', response.status);
-                    return;
-                }
-                
-                const data = await response.json();
-                console.log('Loaded coupons:', data);
-                
-                if (data.success && data.coupons && data.coupons.length > 0) {
-                    availableCoupons = data.coupons;
-                    const optgroup = document.getElementById('userCouponsGroup');
-                    
-                    // Clear existing options first
-                    optgroup.innerHTML = '';
-                    
-                    data.coupons.forEach(coupon => {
-                        const option = document.createElement('option');
-                        option.value = coupon.code;
-                        option.textContent = `${coupon.icon} ${coupon.name} - ${formatDiscount(coupon)}`;
-                        option.dataset.coupon = JSON.stringify(coupon);
-                        optgroup.appendChild(option);
-                    });
-                    
-                    console.log('Successfully added', data.coupons.length, 'coupons to dropdown');
-                } else {
-                    console.log('No coupons available or data.success is false');
-                }
-            } catch (error) {
-                console.error('Failed to load coupons:', error);
-            }
-        }
-        
-        /* Format discount for display */
-        function formatDiscount(coupon) {
-            if (coupon.discount_type === 'percentage') {
-                return `${coupon.discount_value}% OFF`;
-            } else {
-                return `HK$${coupon.discount_value} OFF`;
-            }
-        }
-        
-        /* Handle coupon selection from dropdown */
-        function applyCoupon() {
-            const select = document.getElementById('coupon_code');
-            const selectedValue = select.value;
-            const manualInput = document.getElementById('manualCouponInput');
-            const couponInfo = document.getElementById('couponInfo');
-            
-            console.log('applyCoupon called, selectedValue:', selectedValue);
-            
-            // Reset
-            manualInput.style.display = 'none';
-            couponInfo.classList.remove('active');
-            currentDiscount = 0;
-            currentCouponCode = '';
-            
-            if (selectedValue === 'manual') {
-                // Show manual input
-                manualInput.style.display = 'block';
-            } else if (selectedValue && selectedValue !== '') {
-                // Apply selected coupon
-                const selectedOption = select.options[select.selectedIndex];
-                console.log('Selected option:', selectedOption);
-                
-                if (selectedOption.dataset.coupon) {
-                    try {
-                        const couponData = JSON.parse(selectedOption.dataset.coupon);
-                        console.log('Coupon data:', couponData);
-                        displayCouponInfo(couponData);
-                        validateAndApplyDiscount(selectedValue);
-                    } catch (error) {
-                        console.error('Error parsing coupon data:', error);
-                    }
-                } else {
-                    console.error('No coupon data found in option');
-                }
-            }
-            
-            updatePrice();
-        }
-        
-        /* Validate and apply manual coupon code */
-        async function validateManualCoupon() {
-            const manualCode = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
-            
-            if (!manualCode) {
-                alert('請輸入優惠券代碼');
-                return;
-            }
-            
-            await validateAndApplyDiscount(manualCode);
-        }
-        
-        /* Validate coupon and apply discount */
-        async function validateAndApplyDiscount(couponCode) {
-            const seats = parseInt(document.getElementById('seats').value) || 1;
-            const orderTotal = seats * 100;
-            
-            try {
-                const response = await fetch('/api/validate_coupon', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        coupon_code: couponCode,
-                        order_total: orderTotal
-                    })
+        updatePrice();
+    }
+
+    async function loadUserCoupons() {
+        try {
+            const response = await fetch('/api/get_user_coupons');
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data.success && data.coupons && data.coupons.length > 0) {
+                availableCoupons = data.coupons;
+                const optgroup = document.getElementById('userCouponsGroup');
+                optgroup.innerHTML = '';
+                data.coupons.forEach(coupon => {
+                    const option = document.createElement('option');
+                    option.value = coupon.code;
+                    option.textContent = `${coupon.icon} ${coupon.name} - ${formatDiscount(coupon)}`;
+                    option.dataset.coupon = JSON.stringify(coupon);
+                    optgroup.appendChild(option);
                 });
-                
-                const result = await response.json();
-                
-                if (result.valid) {
-                    currentDiscount = result.discount;
-                    currentCouponCode = couponCode;
-                    
-                    // Update coupon code field to ensure it's submitted
-                    document.getElementById('coupon_code').value = couponCode;
-                    
-                    // Show success message
-                    alert(`✅ ${result.message}\n折扣：HK$${result.discount.toFixed(2)}`);
-                    
-                    // Display coupon info if available
-                    if (result.coupon_name) {
-                        displayCouponInfo({
-                            name: result.coupon_name,
-                            description: result.coupon_description,
-                            discount_value: result.discount
-                        });
-                    }
-                } else {
-                    alert(`❌ ${result.message}`);
-                    currentDiscount = 0;
-                    currentCouponCode = '';
-                }
-                
-                updatePrice();
-            } catch (error) {
-                console.error('Validation error:', error);
-                alert('❌ 優惠券驗證失敗，請稍後再試');
             }
-        }
-        
-        /* Display coupon information */
-        function displayCouponInfo(coupon) {
-            const couponInfo = document.getElementById('couponInfo');
-            
-            document.querySelector('#couponName span').textContent = coupon.name || '優惠券';
-            document.querySelector('#couponDiscount span').textContent = coupon.description || formatDiscount(coupon);
-            
-            if (coupon.expiry_date) {
-                document.querySelector('#couponExpiry span').textContent = coupon.expiry_date;
-                document.getElementById('couponExpiry').style.display = 'block';
-            } else {
-                document.getElementById('couponExpiry').style.display = 'none';
-            }
-            
-            couponInfo.classList.add('active');
-        }
-        
-        /* Calculate and update total price with discount */
-        function updatePrice() {
-            const seats = parseInt(document.getElementById('seats').value) || 1;
-            const pricePerSeat = {{ movie.price }};
-            const subtotal = seats * pricePerSeat;
-            
-            // Calculate final total with discount
-            const discount = Math.min(currentDiscount, subtotal); // Discount can't exceed total
-            const total = subtotal - discount;
-            
-            // Update price display
-            if (discount > 0) {
-                document.getElementById('originalPrice').style.display = 'block';
-                document.getElementById('discountAmount').style.display = 'block';
-                document.querySelector('#originalPrice span').textContent = subtotal.toFixed(2);
-                document.querySelector('#discountAmount span').textContent = discount.toFixed(2);
-            } else {
-                document.getElementById('originalPrice').style.display = 'none';
-                document.getElementById('discountAmount').style.display = 'none';
-            }
-            
-            document.querySelector('#totalPrice span').textContent = total.toFixed(2);
-        }
-        
-        /* Ensure coupon code is included in form submission */
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
-            if (currentCouponCode) {
-                // Make sure the coupon code is set
-                const couponInput = document.getElementById('coupon_code');
-                if (couponInput.value === 'manual') {
-                    couponInput.value = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
-                }
-            }
-        });
-    </script>
+        } catch (e) { console.error(e); }
+    }
 
-    <!-- Auto-hide flash messages after 5 seconds -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                setTimeout(function() {
-                    alert.classList.add('fade-out');
-                    setTimeout(function() {
-                        alert.remove();
-                    }, 300); // Wait for fade animation
-                }, 5000); // 5 seconds
+    function formatDiscount(coupon) {
+        if (coupon.discount_type === 'percentage') return `${coupon.discount_value}% OFF`;
+        return `HK$${coupon.discount_value} OFF`;
+    }
+
+    function applyCoupon() {
+        const select = document.getElementById('coupon_code');
+        const selectedValue = select.value;
+        const manualInput = document.getElementById('manualCouponInput');
+        const couponInfo = document.getElementById('couponInfo');
+        manualInput.style.display = 'none';
+        couponInfo.classList.remove('active');
+        currentDiscount = 0;
+        currentCouponCode = '';
+        if (selectedValue === 'manual') {
+            manualInput.style.display = 'block';
+        } else if (selectedValue) {
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption.dataset.coupon) {
+                const couponData = JSON.parse(selectedOption.dataset.coupon);
+                displayCouponInfo(couponData);
+                validateAndApplyDiscount(selectedValue);
+            }
+        }
+        updatePrice();
+    }
+
+    async function validateManualCoupon() {
+        const manualCode = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
+        if (!manualCode) { alert('請輸入優惠券代碼'); return; }
+        await validateAndApplyDiscount(manualCode);
+    }
+
+    async function validateAndApplyDiscount(couponCode) {
+        const seats = parseInt(document.getElementById('seats').value) || 1;
+        const orderTotal = seats * {{ movie.price }};
+        try {
+            const response = await fetch('/api/validate_coupon', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ coupon_code: couponCode, order_total: orderTotal })
             });
-        });
-    </script>
-</body>
-</html>
+            const result = await response.json();
+            if (result.valid) {
+                currentDiscount = result.discount;
+                currentCouponCode = couponCode;
+                document.getElementById('coupon_code').value = couponCode;
+                if (result.coupon_name) {
+                    displayCouponInfo({ name: result.coupon_name, description: result.coupon_description, discount_value: result.discount });
+                }
+            } else {
+                alert(`❌ ${result.message}`);
+                currentDiscount = 0;
+                currentCouponCode = '';
+            }
+            updatePrice();
+        } catch (error) {
+            console.error('Validation error:', error);
+            alert('❌ 優惠券驗證失敗，請稍後再試');
+        }
+    }
+
+    function displayCouponInfo(coupon) {
+        const couponInfo = document.getElementById('couponInfo');
+        document.querySelector('#couponName span').textContent = coupon.name || '優惠券';
+        document.querySelector('#couponDiscount span').textContent = coupon.description || formatDiscount(coupon);
+        if (coupon.expiry_date) {
+            document.querySelector('#couponExpiry span').textContent = coupon.expiry_date;
+            document.getElementById('couponExpiry').style.display = 'block';
+        } else {
+            document.getElementById('couponExpiry').style.display = 'none';
+        }
+        couponInfo.classList.add('active');
+    }
+
+    function updatePrice() {
+        const seats = parseInt(document.getElementById('seats').value) || 1;
+        const pricePerSeat = {{ movie.price }};
+        const subtotal = seats * pricePerSeat;
+        const discount = Math.min(currentDiscount, subtotal);
+        const total = subtotal - discount;
+        if (discount > 0) {
+            document.getElementById('originalPrice').style.display = 'block';
+            document.getElementById('discountAmount').style.display = 'block';
+            document.querySelector('#originalPrice span').textContent = subtotal.toFixed(2);
+            document.querySelector('#discountAmount span').textContent = discount.toFixed(2);
+        } else {
+            document.getElementById('originalPrice').style.display = 'none';
+            document.getElementById('discountAmount').style.display = 'none';
+        }
+        document.querySelector('#totalPrice span').textContent = total.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('bookingForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (currentCouponCode) {
+                    const couponInput = document.getElementById('coupon_code');
+                    if (couponInput.value === 'manual') {
+                        couponInput.value = document.getElementById('manual_coupon_code').value.trim().toUpperCase();
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
