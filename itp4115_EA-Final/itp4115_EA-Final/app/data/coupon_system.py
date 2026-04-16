@@ -485,10 +485,12 @@ def get_coupon_info(coupon):
         'name': template.get('name', '優惠券'),
         'description': template.get('description', ''),
         'icon': template.get('icon', '🎫'),
+        'discount_type': template.get('discount_type'),
+        'discount_value': template.get('discount_value', 0),
+        'min_purchase': template.get('min_purchase', 0),
         'expiry_date': coupon.expiry_date,
         'is_valid': coupon.is_valid,
         'is_used': coupon.is_used,
-        'min_purchase': template.get('min_purchase', 0),
         'days_remaining': days_remaining
     }
 

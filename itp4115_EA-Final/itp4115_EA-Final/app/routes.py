@@ -62,6 +62,23 @@ def _format_showtime_label(showtime_obj):
     return dt.strftime("%Y-%m-%d %H:%M")
 
 
+def _parse_seat_numbers(raw_seat_numbers):
+    if not raw_seat_numbers:
+        return []
+    return [seat.strip().upper() for seat in str(raw_seat_numbers).split(',') if seat.strip()]
+
+
+def _get_sold_seats_for_showtime(showtime_obj):
+    sold = set()
+    showtime_label = _format_showtime_label(showtime_obj)
+    tickets = Ticket.query.filter_by(movie_id=showtime_obj.movie_id, showtime=showtime_label).all()
+    for ticket in tickets:
+        if ticket.status == 'cancelled':
+            continue
+        sold.update(_parse_seat_numbers(ticket.seat_numbers))
+    return sold
+
+
 def _movie_view_model(movie, include_showtimes=False):
     showtimes = []
     if include_showtimes:
@@ -392,10 +409,10 @@ def profile():
     from collections import Counter
     genre_counter = Counter()
     for ticket in user_tickets:
-        # Find the movie to get its genre
-        movie = next((m for m in movies if m['id'] == ticket.movie_id), None)
-        if movie and 'genre' in movie:
-            genre_counter[movie['genre']] += 1
+        # Fetch movie genre from DB for each booking
+        movie_obj = Movie.query.get(ticket.movie_id)
+        if movie_obj and movie_obj.genre:
+            genre_counter[movie_obj.genre] += 1
     
     favorite_genre = genre_counter.most_common(1)[0][0] if genre_counter else "尚未觀影"
     
@@ -508,6 +525,60 @@ def admin_console():
         stats=stats,
         now_showing_total=Movie.query.filter_by(status='now_showing').count(),
         coming_soon_total=Movie.query.filter_by(status='coming_soon').count()
+    )
+
+
+@app.route('/admin/tickets')
+@login_required
+def admin_tickets():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    movie_id = request.args.get('movie_id', type=int)
+    buyer_query = (request.args.get('buyer') or '').strip()
+    booked_date_raw = (request.args.get('booked_at') or '').strip()
+    tickets_query = Ticket.query
+    if movie_id:
+        tickets_query = tickets_query.filter_by(movie_id=movie_id)
+
+    if buyer_query:
+        buyer_like = f"%{buyer_query}%"
+        tickets_query = tickets_query.filter(
+            (Ticket.customer_name.ilike(buyer_like)) |
+            (Ticket.customer_email.ilike(buyer_like))
+        )
+
+    if booked_date_raw:
+        try:
+            booked_date = datetime.strptime(booked_date_raw, '%Y-%m-%d')
+            start = booked_date
+            end = booked_date + timedelta(days=1)
+            tickets_query = tickets_query.filter(Ticket.booking_date >= start, Ticket.booking_date < end)
+        except ValueError:
+            flash('Invalid date format for Booked At. Use YYYY-MM-DD.', 'error')
+
+    tickets = tickets_query.order_by(Ticket.booking_date.desc()).all()
+    movie_rows = Movie.query.order_by(Movie.title.asc()).all()
+    movie_options = [{'id': movie.id, 'title': movie.title} for movie in movie_rows]
+    movie_ids = {movie['id'] for movie in movie_options}
+    ticket_movie_rows = (
+        db.session.query(Ticket.movie_id, Ticket.movie_title)
+        .filter(Ticket.movie_id.isnot(None))
+        .distinct()
+        .all()
+    )
+    for movie_id, movie_title in ticket_movie_rows:
+        if movie_id not in movie_ids and movie_title:
+            movie_options.append({'id': movie_id, 'title': movie_title})
+    movie_options.sort(key=lambda item: (item['title'] or '').lower())
+    return render_template(
+        'admin_tickets.html.j2',
+        tickets=tickets,
+        movies=movie_options,
+        selected_movie_id=movie_id,
+        buyer_query=buyer_query,
+        booked_date=booked_date_raw,
     )
 
 #for creating admin
@@ -666,7 +737,17 @@ def cinema_index():
 def cinema_movie(movie_id):
     movie = Movie.query.get_or_404(movie_id)
     movie_vm = _movie_view_model(movie, include_showtimes=True)
-    return render_template('cinema_movie.html.j2', movie=movie_vm)
+    sold_seats_by_showtime = {}
+    for st in movie.showtimes:
+        sold_seats_by_showtime[str(st.id)] = sorted(_get_sold_seats_for_showtime(st))
+    return render_template('cinema_movie.html.j2', movie=movie_vm, sold_seats_by_showtime=sold_seats_by_showtime)
+
+
+@app.route('/api/showtime/<int:showtime_id>/sold_seats', methods=['GET'])
+def api_showtime_sold_seats(showtime_id):
+    showtime_obj = Showtime.query.get_or_404(showtime_id)
+    sold_seats = sorted(_get_sold_seats_for_showtime(showtime_obj))
+    return jsonify({'success': True, 'sold_seats': sold_seats})
 
 @app.route('/cinema/coming_soon')
 def cinema_coming_soon():
@@ -786,6 +867,24 @@ def cinema_buy_ticket():
         flash('電影不存在！', 'error')
         return redirect(url_for('cinema_index'))
 
+    selected_seat_list = _parse_seat_numbers(selected_seats)
+    if not selected_seat_list:
+        flash('請至少選擇 1 個座位', 'error')
+        return redirect(url_for('cinema_movie', movie_id=movie_id))
+
+    if len(selected_seat_list) != len(set(selected_seat_list)):
+        flash('座位清單重複，請重新選擇', 'error')
+        return redirect(url_for('cinema_movie', movie_id=movie_id))
+
+    sold_seats = _get_sold_seats_for_showtime(showtime_obj)
+    conflicted_seats = sorted(set(selected_seat_list).intersection(sold_seats))
+    if conflicted_seats:
+        flash(f"以下座位已售：{', '.join(conflicted_seats)}", 'error')
+        return redirect(url_for('cinema_movie', movie_id=movie_id))
+
+    seats = len(selected_seat_list)
+    selected_seats = ','.join(selected_seat_list)
+
     price_per_ticket = showtime_obj.price if showtime_obj else 100
 
     # Calculate base price
@@ -864,8 +963,8 @@ def cinema_buy_ticket():
     ticket_info = {
         'id': ticket.id,
         'movie_id': movie_id,
-        'movie_title': movie['title'],
-        'showtime': showtime,
+        'movie_title': movie.title,
+        'showtime': _format_showtime_label(showtime_obj),
         'name': name,
         'email': email,
         'seats': seats,
@@ -884,7 +983,7 @@ def cinema_buy_ticket():
 @login_required
 def my_movies():
     # 推薦電影列表
-    recommended_movies = movies[:6]  # 取前6部電影作為推薦
+    recommended_movies = Movie.query.filter_by(status='now_showing').limit(6).all()
     return render_template('my_movies.html.j2', movies=recommended_movies)
 
 # 我的訂票記錄頁面
@@ -1271,9 +1370,9 @@ def api_get_user_coupons():
             'name': coupon_info['name'],
             'description': coupon_info['description'],
             'icon': coupon_info['icon'],
-            'discount_type': coupon_info['discount_type'],
-            'discount_value': coupon_info['discount_value'],
-            'min_purchase': coupon_info['min_purchase'],
+            'discount_type': coupon_info.get('discount_type'),
+            'discount_value': coupon_info.get('discount_value', 0),
+            'min_purchase': coupon_info.get('min_purchase', 0),
             'expiry_date': coupon.expiry_date.strftime('%Y-%m-%d'),
             'days_remaining': coupon_info['days_remaining']
         }

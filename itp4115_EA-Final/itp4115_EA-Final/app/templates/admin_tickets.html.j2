@@ -1,0 +1,95 @@
+{% extends "base.html.j2" %}
+{% block title %}Ticket Manager{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <style>
+        .ticket-hero {background: linear-gradient(135deg, rgba(246,208,0,0.16), rgba(246,208,0,0.05)); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow);}
+        .ticket-hero h1 {margin: 0 0 6px 0;}
+        .ticket-hero p {margin: 0; color: var(--muted);}
+        .filter-row {display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px;}
+        .filter-row label {color: var(--muted); font-weight: 700; font-size: 0.9rem;}
+        .filter-row select,
+        .filter-row input {padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text);}
+        .filter-row button {padding: 8px 12px; border-radius: 10px; border: 1px solid transparent; background: var(--primary); color: #0b0b0b; font-weight: 700; cursor: pointer;}
+        .filter-row a {color: var(--muted); text-decoration: underline; font-size: 0.9rem;}
+        .ticket-table {width: 100%; border-collapse: collapse; margin-top: 18px;}
+        .ticket-table th, .ticket-table td {padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top;}
+        .ticket-table th {color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.4px;}
+        .ticket-card {background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; box-shadow: var(--shadow); overflow-x: auto;}
+        .ticket-pill {display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 0.85rem;}
+        .ticket-pill.success {background: rgba(16,185,129,0.22); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5);}
+        .ticket-pill.cancelled {background: rgba(239,68,68,0.22); color: #fecaca; border: 1px solid rgba(239,68,68,0.55);}
+        .mono {font-variant-numeric: tabular-nums;}
+    </style>
+
+    <div class="ticket-hero">
+        <h1>Ticket Manager</h1>
+        <p>查看購票紀錄、購票人與座位資訊。</p>
+        <form class="filter-row" method="get" action="{{ url_for('admin_tickets') }}">
+            <label for="movie_id">Movie</label>
+            <select name="movie_id" id="movie_id">
+                <option value="">All Movies</option>
+                {% for movie in movies %}
+                    <option value="{{ movie.id }}"{% if selected_movie_id == movie.id %} selected{% endif %}>{{ movie.title }}</option>
+                {% endfor %}
+            </select>
+            <label for="buyer">Buyer</label>
+            <input type="text" name="buyer" id="buyer" value="{{ buyer_query }}" placeholder="Name or email">
+            <label for="booked_at">Booked At</label>
+            <input type="date" name="booked_at" id="booked_at" value="{{ booked_date }}">
+            <button type="submit">Filter</button>
+            {% if selected_movie_id or buyer_query or booked_date %}
+                <a href="{{ url_for('admin_tickets') }}">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="ticket-card">
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Movie</th>
+                    <th>Showtime</th>
+                    <th>Buyer</th>
+                    <th>Seat(s)</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Booked At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td class="mono">#{{ ticket.id }}</td>
+                    <td>{{ ticket.movie_title }}</td>
+                    <td class="mono">{{ ticket.showtime }}</td>
+                    <td>
+                        <div>{{ ticket.user.username if ticket.user else ticket.customer_name }}</div>
+                        <div style="color: var(--muted); font-size: 0.85rem;">{{ ticket.customer_email }}</div>
+                    </td>
+                    <td class="mono">{{ ticket.seat_numbers or '—' }}</td>
+                    <td class="mono">{{ ticket.seats }}</td>
+                    <td class="mono">HK${{ '%.2f'|format(ticket.total_price) }}</td>
+                    <td>
+                        {% if ticket.status == 'confirmed' %}
+                            <span class="ticket-pill success">Confirmed</span>
+                        {% elif ticket.status == 'cancelled' %}
+                            <span class="ticket-pill cancelled">Cancelled</span>
+                        {% else %}
+                            <span class="ticket-pill">{{ ticket.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="mono">{{ ticket.booking_date.strftime('%Y-%m-%d %H:%M') if ticket.booking_date else '—' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align:center; color: var(--muted); padding: 20px;">No tickets yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

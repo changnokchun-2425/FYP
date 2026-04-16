@@ -201,18 +201,34 @@
     let selectedSeats = [];
     const ROWS = ['A','B','C','D','E','F','G','H'];
     const SEATS_PER_ROW = 10;
-    const occupiedSeats = [];
+    const initialSoldSeatsByShowtime = {{ sold_seats_by_showtime|tojson }};
+    let occupiedSeats = [];
 
     document.addEventListener('DOMContentLoaded', async function() {
         await loadUserCoupons();
         updatePrice();
     });
 
-    function loadSeats() {
+    async function fetchSoldSeats(showtimeId) {
+        try {
+            const response = await fetch(`/api/showtime/${showtimeId}/sold_seats`);
+            if (!response.ok) return initialSoldSeatsByShowtime[String(showtimeId)] || [];
+            const data = await response.json();
+            if (data.success && Array.isArray(data.sold_seats)) {
+                return data.sold_seats;
+            }
+        } catch (error) {
+            console.error('Failed to load sold seats:', error);
+        }
+        return initialSoldSeatsByShowtime[String(showtimeId)] || [];
+    }
+
+    async function loadSeats() {
         const showtime = document.getElementById('showtime').value;
         const seatSelection = document.getElementById('seatSelection');
         const seatMap = document.getElementById('seatMap');
         if (!showtime) { seatSelection.style.display = 'none'; return; }
+        occupiedSeats = await fetchSoldSeats(showtime);
         selectedSeats = [];
         updateSelectedSeatsDisplay();
         seatSelection.style.display = 'block';
@@ -232,6 +248,7 @@
                 seat.textContent = i;
                 if (occupiedSeats.includes(seatId)) {
                     seat.classList.add('occupied');
+                    seat.textContent = '已售';
                 } else {
                     seat.onclick = () => toggleSeat(seatId);
                 }
