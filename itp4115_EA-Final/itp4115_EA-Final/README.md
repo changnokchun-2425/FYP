@@ -12,3 +12,6 @@ flask admin create
 flask routes
 
 flask --app itp4115_EA-Final/itp4115_EA-Final/run.py run
+
+Username: admin_user
+Password: admin123

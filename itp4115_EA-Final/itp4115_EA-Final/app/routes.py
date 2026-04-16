@@ -486,7 +486,7 @@ def admin_login():
             next_page = url_for('admin_console')
         return redirect(next_page)
 
-    return render_template('admin_login.html.j2', title="Admin Sign In", form=form)
+    return render_template('login.html.j2', title="Admin Sign In", form=form)
 
 @app.route("/admin")
 @login_required
