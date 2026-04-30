@@ -69,6 +69,33 @@ def _format_showtime_label(showtime_obj):
     return dt.strftime("%Y-%m-%d %H:%M")
 
 
+def _get_showtime_datetime(showtime_obj):
+    return datetime.combine(showtime_obj.show_date, showtime_obj.show_time)
+
+
+def _apply_time_pricing(base_price, showtime_obj, now=None):
+    if base_price is None:
+        return 0
+    showtime_dt = _get_showtime_datetime(showtime_obj)
+    now = now or datetime.now()
+    if showtime_dt <= now:
+        return float(base_price)
+
+    hours_to_show = (showtime_dt - now).total_seconds() / 3600
+    tiers = [
+        (2, 1.5),
+        (6, 1.25),
+        (24, 1.1),
+    ]
+    multiplier = 1.0
+    for threshold, rate in tiers:
+        if hours_to_show <= threshold:
+            multiplier = rate
+            break
+
+    return round(float(base_price) * multiplier, 2)
+
+
 def _parse_seat_numbers(raw_seat_numbers):
     if not raw_seat_numbers:
         return []
@@ -93,7 +120,7 @@ def _movie_view_model(movie, include_showtimes=False):
             {
                 'id': st.id,
                 'label': _format_showtime_label(st),
-                'price': st.price,
+                'price': _apply_time_pricing(st.price, st),
             }
             for st in sorted(movie.showtimes, key=lambda s: (s.show_date, s.show_time))
         ]
@@ -811,7 +838,8 @@ def admin_movies():
         return redirect(url_for('index'))
 
     movies = Movie.query.order_by(Movie.status, Movie.title).all()
-    return render_template('admin_movies.html.j2', movies=movies)
+    halls = Hall.query.filter_by(is_active=True).order_by(Hall.id).all()
+    return render_template('admin_movies.html.j2', movies=movies, halls=halls)
 
 
 @app.route('/admin/movies/create', methods=['POST'])
@@ -895,6 +923,126 @@ def admin_delete_movie(movie_id):
     flash('Movie deleted successfully!')
     return redirect(url_for('admin_movies'))
 
+
+@app.route('/admin/showtimes/create', methods=['POST'])
+@login_required
+def admin_create_showtime():
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    movie_id = request.form.get('movie_id')
+    hall_id = request.form.get('hall_id')
+    show_date_raw = request.form.get('show_date')
+    show_time_raw = request.form.get('show_time')
+    price_raw = request.form.get('price')
+
+    if not movie_id or not hall_id or not show_date_raw or not show_time_raw:
+        flash('Please provide movie, hall, date, and time for the showtime.')
+        return redirect(url_for('admin_movies'))
+
+    movie = Movie.query.get(movie_id)
+    hall = Hall.query.get(hall_id)
+    if not movie or not hall:
+        flash('Invalid movie or hall selection.')
+        return redirect(url_for('admin_movies'))
+
+    try:
+        show_date = datetime.strptime(show_date_raw, '%Y-%m-%d').date()
+        show_time = datetime.strptime(show_time_raw, '%H:%M').time()
+    except ValueError:
+        flash('Invalid date/time format for showtime.')
+        return redirect(url_for('admin_movies'))
+
+    try:
+        price = float(price_raw) if price_raw else 120.0
+    except ValueError:
+        price = 120.0
+
+    existing = Showtime.query.filter_by(
+        movie_id=movie.id,
+        hall_id=hall.id,
+        show_date=show_date,
+        show_time=show_time,
+    ).first()
+    if existing:
+        flash('This showtime already exists.')
+        return redirect(url_for('admin_movies'))
+
+    showtime = Showtime(
+        movie_id=movie.id,
+        hall_id=hall.id,
+        show_date=show_date,
+        show_time=show_time,
+        price=price,
+        available_seats=hall.total_seats,
+        status='available',
+    )
+    db.session.add(showtime)
+    db.session.commit()
+    flash('Showtime created successfully!')
+    return redirect(url_for('admin_movies'))
+
+
+@app.route('/admin/showtimes/<int:showtime_id>/update', methods=['POST'])
+@login_required
+def admin_update_showtime(showtime_id):
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    showtime = Showtime.query.get_or_404(showtime_id)
+    hall_id = request.form.get('hall_id')
+    show_date_raw = request.form.get('show_date')
+    show_time_raw = request.form.get('show_time')
+    price_raw = request.form.get('price')
+    status = request.form.get('status') or showtime.status
+
+    if not hall_id or not show_date_raw or not show_time_raw:
+        flash('Please provide hall, date, and time for the showtime.')
+        return redirect(url_for('admin_movies'))
+
+    hall = Hall.query.get(hall_id)
+    if not hall:
+        flash('Invalid hall selection.')
+        return redirect(url_for('admin_movies'))
+
+    try:
+        showtime.show_date = datetime.strptime(show_date_raw, '%Y-%m-%d').date()
+        showtime.show_time = datetime.strptime(show_time_raw, '%H:%M').time()
+    except ValueError:
+        flash('Invalid date/time format for showtime.')
+        return redirect(url_for('admin_movies'))
+
+    try:
+        showtime.price = float(price_raw) if price_raw else showtime.price
+    except ValueError:
+        flash('Invalid price format for showtime.')
+        return redirect(url_for('admin_movies'))
+
+    if showtime.hall_id != hall.id:
+        showtime.hall_id = hall.id
+        showtime.available_seats = hall.total_seats
+
+    showtime.status = status
+    db.session.commit()
+    flash('Showtime updated successfully!')
+    return redirect(url_for('admin_movies'))
+
+
+@app.route('/admin/showtimes/<int:showtime_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_showtime(showtime_id):
+    if not current_user.is_admin:
+        flash('You do not have admin access!')
+        return redirect(url_for('index'))
+
+    showtime = Showtime.query.get_or_404(showtime_id)
+    db.session.delete(showtime)
+    db.session.commit()
+    flash('Showtime deleted successfully!')
+    return redirect(url_for('admin_movies'))
+
 @app.route('/cinema/buy_ticket', methods=['POST'])
 @login_required
 def cinema_buy_ticket():
@@ -932,6 +1080,8 @@ def cinema_buy_ticket():
     selected_seats = ','.join(selected_seat_list)
 
     price_per_ticket = showtime_obj.price if showtime_obj else 100
+    if showtime_obj:
+        price_per_ticket = _apply_time_pricing(price_per_ticket, showtime_obj)
 
     # Calculate base price
     base_price = seats * price_per_ticket

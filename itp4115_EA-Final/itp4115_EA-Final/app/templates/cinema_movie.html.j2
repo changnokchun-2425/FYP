@@ -84,7 +84,7 @@
             <h1 class="hero-title">{{ movie.title }}</h1>
             <p class="hero-desc">{{ movie.description }}</p>
             <div class="meta-line">
-                <span class="pill">HK${{ movie.price }} / 張</span>
+                <span class="pill">HK${{ '%.2f'|format(movie.price) }} / 張</span>
                 <span class="pill">🎟️ 映後謝票場</span>
                 <span class="pill">🎁 限定收藏卡</span>
             </div>
@@ -103,14 +103,14 @@
             <div class="info-card"><div class="info-label">上映日期</div><div class="info-value">{{ movie.release_date or '待公布' }}</div></div>
             <div class="info-card"><div class="info-label">片長</div><div class="info-value">{{ movie.duration }}</div></div>
             <div class="info-card"><div class="info-label">級別</div><div class="info-value">{{ movie.rating or 'IIB' }}</div></div>
-            <div class="info-card"><div class="info-label">票價</div><div class="info-value">HK${{ movie.price }}</div></div>
+            <div class="info-card"><div class="info-label">票價</div><div class="info-value">HK${{ '%.2f'|format(movie.price) }}</div></div>
         </div>
         <div style="margin-top:14px; color: var(--text); line-height:1.6;">{{ movie.description }}</div>
 
         <h4 style="margin-top:18px; margin-bottom:8px;">場次</h4>
         <div class="showtime-pills">
             {% for st in movie.showtimes %}
-                <span class="showtime-pill">🕒 {{ st.label }} <span style="color:#f6d000; font-weight:800;">HK${{ st.price }}</span></span>
+                <span class="showtime-pill">🕒 {{ st.label }} <span style="color:#f6d000; font-weight:800;">HK${{ '%.2f'|format(st.price) }}</span></span>
             {% endfor %}
         </div>
 
@@ -127,7 +127,7 @@
             <select name="showtime" id="showtime" required onchange="loadSeats()">
                 <option value="">請選擇場次</option>
                 {% for st in movie.showtimes %}
-                <option value="{{ st.id }}">{{ st.label }}</option>
+                <option value="{{ st.id }}" data-price="{{ '%.2f'|format(st.price) }}">{{ st.label }} - HK${{ '%.2f'|format(st.price) }}</option>
                 {% endfor %}
             </select>
 
@@ -176,10 +176,10 @@
             </div>
 
             <div class="price-info">
-                <p><strong>票價：</strong>HK$<span id="pricePerSeat">{{ movie.price }}</span> / 張</p>
-                <p id="originalPrice" style="display:none;"><strong>原價：</strong>HK$<span>{{ movie.price }}</span></p>
+                <p><strong>票價：</strong>HK$<span id="pricePerSeat">{{ '%.2f'|format(movie.price) }}</span> / 張</p>
+                <p id="originalPrice" style="display:none;"><strong>原價：</strong>HK$<span>{{ '%.2f'|format(movie.price) }}</span></p>
                 <p id="discountAmount" style="display:none;"><strong>優惠：</strong>-HK$<span>0</span></p>
-                <p id="totalPrice"><strong>總計：</strong>HK$<span>{{ movie.price }}</span></p>
+                <p id="totalPrice"><strong>總計：</strong>HK$<span>{{ '%.2f'|format(movie.price) }}</span></p>
             </div>
 
             <button type="submit" class="btn btn-primary" style="width:100%; margin-top:12px;">🎫 確認購票</button>
@@ -199,6 +199,7 @@
     let currentDiscount = 0;
     let currentCouponCode = '';
     let selectedSeats = [];
+    const defaultPricePerSeat = {{ movie.price }};
     const ROWS = ['A','B','C','D','E','F','G','H'];
     const SEATS_PER_ROW = 10;
     const initialSoldSeatsByShowtime = {{ sold_seats_by_showtime|tojson }};
@@ -256,6 +257,7 @@
             }
             seatMap.appendChild(rowDiv);
         });
+        updatePrice();
     }
 
     function toggleSeat(seatId) {
@@ -346,7 +348,7 @@
 
     async function validateAndApplyDiscount(couponCode) {
         const seats = parseInt(document.getElementById('seats').value) || 1;
-        const orderTotal = seats * {{ movie.price }};
+        const orderTotal = seats * getSelectedPricePerSeat();
         try {
             const response = await fetch('/api/validate_coupon', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -372,6 +374,19 @@
         }
     }
 
+    function getSelectedPricePerSeat() {
+        const showtimeSelect = document.getElementById('showtime');
+        if (!showtimeSelect || !showtimeSelect.value) {
+            return defaultPricePerSeat;
+        }
+        const selectedOption = showtimeSelect.options[showtimeSelect.selectedIndex];
+        const optionPrice = parseFloat(selectedOption?.dataset?.price || '');
+        if (Number.isFinite(optionPrice)) {
+            return optionPrice;
+        }
+        return defaultPricePerSeat;
+    }
+
     function displayCouponInfo(coupon) {
         const couponInfo = document.getElementById('couponInfo');
         document.querySelector('#couponName span').textContent = coupon.name || '優惠券';
@@ -387,7 +402,8 @@
 
     function updatePrice() {
         const seats = parseInt(document.getElementById('seats').value) || 1;
-        const pricePerSeat = {{ movie.price }};
+        const pricePerSeat = getSelectedPricePerSeat();
+        document.getElementById('pricePerSeat').textContent = pricePerSeat.toFixed(2);
         const subtotal = seats * pricePerSeat;
         const discount = Math.min(currentDiscount, subtotal);
         const total = subtotal - discount;

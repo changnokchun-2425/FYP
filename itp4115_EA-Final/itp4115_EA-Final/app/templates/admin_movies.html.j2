@@ -4,7 +4,7 @@
 <div class="container py-5">
     <style>
         .list-shell { display: grid; gap: 14px; }
-        .movie-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: grid; grid-template-columns: 120px 1fr 240px; gap: 12px; align-items: center; }
+        .movie-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: grid; grid-template-columns: 120px 1fr 240px; gap: 12px; align-items: start; }
         .movie-card img { width: 100%; border-radius: 10px; border: 1px solid var(--border); aspect-ratio: 2/3; object-fit: cover; background: #0c0c0c; }
         .movie-meta { display: grid; gap: 6px; }
         .badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -13,6 +13,19 @@
         .form-inline { display: grid; gap: 6px; }
         .form-inline input, .form-inline select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
         .actions { display: flex; gap: 8px; }
+        .showtime-panel { background: var(--panel-2); border: 1px dashed var(--border); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+        .showtime-list { display: grid; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+        .showtime-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) auto; gap: 8px; align-items: center; }
+        .showtime-row input, .showtime-row select { width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+        .showtime-actions { display: flex; gap: 6px; }
+        details.showtime-toggle { background: var(--panel-2); border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; }
+        details.showtime-toggle[open] { padding-bottom: 12px; }
+        details.showtime-toggle > summary { cursor: pointer; font-weight: 700; color: var(--text); list-style: none; }
+        details.showtime-toggle > summary::-webkit-details-marker { display: none; }
+        .summary-meta { color: var(--muted); font-weight: 600; margin-left: 6px; }
+        .showtime-panel { margin-top: 10px; }
+        .showtime-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+        .showtime-form input, .showtime-form select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
         .create-card { background: var(--panel); border: 1px dashed var(--border); border-radius: 14px; padding: 16px; display: grid; gap: 8px; margin-bottom: 16px; }
         .create-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
         .create-grid input, .create-grid select, .create-grid textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
@@ -56,6 +69,54 @@
                     {% if movie.rating %}<span class="pill-ghost">{{ movie.rating }}</span>{% endif %}
                 </div>
                 {% if movie.description %}<div style="color: var(--muted); line-height:1.4; max-width: 640px;">{{ movie.description }}</div>{% endif %}
+                <details class="showtime-toggle">
+                    <summary>
+                        場次管理
+                        <span class="summary-meta">({{ movie.showtimes|length }} 場)</span>
+                    </summary>
+                    <div class="showtime-panel">
+                        <div class="showtime-list">
+                            {% if movie.showtimes %}
+                                {% for st in movie.showtimes|sort(attribute='show_date') %}
+                                    <form class="showtime-row" method="post" action="{{ url_for('admin_update_showtime', showtime_id=st.id) }}">
+                                        <input type="date" name="show_date" value="{{ st.show_date.strftime('%Y-%m-%d') }}" required>
+                                        <input type="time" name="show_time" value="{{ st.show_time.strftime('%H:%M') }}" required>
+                                        <input type="number" name="price" value="{{ '%.2f'|format(st.price) }}" min="0" step="0.01" required>
+                                        <select name="hall_id" required>
+                                            {% for hall in halls %}
+                                                <option value="{{ hall.id }}" {% if hall.id == st.hall_id %}selected{% endif %}>{{ hall.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <select name="status">
+                                            <option value="available" {% if st.status == 'available' %}selected{% endif %}>available</option>
+                                            <option value="sold_out" {% if st.status == 'sold_out' %}selected{% endif %}>sold_out</option>
+                                            <option value="cancelled" {% if st.status == 'cancelled' %}selected{% endif %}>cancelled</option>
+                                        </select>
+                                        <div class="showtime-actions">
+                                            <button class="btn btn-primary" type="submit">更新</button>
+                                            <button class="btn btn-ghost" type="submit" formmethod="post" formaction="{{ url_for('admin_delete_showtime', showtime_id=st.id) }}" onclick="return confirm('確定要刪除此場次嗎？');">刪除</button>
+                                        </div>
+                                    </form>
+                                {% endfor %}
+                            {% else %}
+                                <div>尚未建立場次，座位選擇會無法顯示。</div>
+                            {% endif %}
+                        </div>
+                        <form class="showtime-form" method="post" action="{{ url_for('admin_create_showtime') }}">
+                            <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                            <input type="date" name="show_date" required>
+                            <input type="time" name="show_time" required>
+                            <input type="number" name="price" placeholder="票價" min="0" step="0.01" required>
+                            <select name="hall_id" required>
+                                <option value="">選擇影廳</option>
+                                {% for hall in halls %}
+                                    <option value="{{ hall.id }}">{{ hall.name }} ({{ hall.total_seats }} 座)</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary" type="submit">新增場次</button>
+                        </form>
+                    </div>
+                </details>
             </div>
             <form class="form-inline" method="post" action="{{ url_for('admin_update_movie', movie_id=movie.id) }}">
                 <input type="text" name="title" value="{{ movie.title }}" placeholder="Title" required>
