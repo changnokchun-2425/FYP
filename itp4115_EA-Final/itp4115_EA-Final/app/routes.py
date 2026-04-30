@@ -42,6 +42,13 @@ from app.data import sample_movies
 admin_cli = AppGroup('admin')
 
 
+def _get_sqlite_db_path():
+    database_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if database_uri.startswith('sqlite:///'):
+        return database_uri.replace('sqlite:///', '', 1)
+    return None
+
+
 def _parse_duration_to_minutes(raw_duration):
     """Convert strings like '127 分鐘' or '181分鐘' to integer minutes."""
     if raw_duration is None:
@@ -222,9 +229,10 @@ def ensure_default_admin():
 def init_seat_numbers_column():
     """Add seat_numbers column to ticket table if it doesn't exist"""
     try:
-        # Get the correct database path
-        basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        db_path = os.path.join(basedir, 'app.db')
+        db_path = _get_sqlite_db_path()
+        if not db_path:
+            print("[DB Init] Non-SQLite database configured, skipping column check")
+            return
         
         print(f"[DB Init] Checking database at: {db_path}")
         print(f"[DB Init] Database exists: {os.path.exists(db_path)}")
@@ -263,12 +271,50 @@ def init_seat_numbers_column():
         import traceback
         traceback.print_exc()
 
+
+def _rebuild_sqlite_database():
+    """Move a corrupted SQLite file aside and recreate the schema."""
+    db_path = _get_sqlite_db_path()
+    if not db_path:
+        raise RuntimeError('SQLite database path is not configured')
+    backup_path = f"{db_path}.corrupt"
+
+    try:
+        db.session.remove()
+    except Exception:
+        pass
+
+    try:
+        db.engine.dispose()
+    except Exception:
+        pass
+
+    if os.path.exists(db_path):
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+        os.replace(db_path, backup_path)
+        print(f"[DB Init] Backed up corrupted database to: {backup_path}")
+
+    db.create_all()
+    print("[DB Init] Recreated database schema")
+
 # Run initialization
 try:
     with app.app_context():
-        init_seat_numbers_column()
-        seed_cinema_content()
-        ensure_default_admin()
+        try:
+            init_seat_numbers_column()
+            seed_cinema_content()
+            ensure_default_admin()
+        except (sqlite3.DatabaseError, Exception) as e:
+            message = str(e).lower()
+            if 'database disk image is malformed' not in message:
+                raise
+
+            print(f"[DB Init] Corrupted database detected: {e}")
+            _rebuild_sqlite_database()
+            init_seat_numbers_column()
+            seed_cinema_content()
+            ensure_default_admin()
 except Exception as e:
     print(f"[DB Init] Failed to initialize: {e}")
 
